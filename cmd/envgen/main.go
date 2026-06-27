@@ -4,8 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"go/ast"
+	"go/token"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"golang.org/x/tools/go/packages"
@@ -16,16 +18,12 @@ import (
 
 func main() {
 	dir := flag.String("dir", ".", "package directory")
-	typeName := flag.String("type", "", "struct type name")
+	typeName := flag.String("type", "", "struct type name to generate loader for")
 	output := flag.String("output", "", "output file (default: <snake>_env_gen.go)")
 	pkgName := flag.String("package", "", "package name override")
 	module := flag.String("module", "github.com/gopherust-io/env", "env module import path")
+	list := flag.Bool("list", false, "list struct types in the package and exit")
 	flag.Parse()
-
-	if *typeName == "" {
-		fmt.Fprintln(os.Stderr, "envgen: -type is required")
-		os.Exit(2)
-	}
 
 	absDir, err := filepath.Abs(*dir)
 	if err != nil {
@@ -35,6 +33,28 @@ func main() {
 	ctx, sourcePkg, err := loadPackageContext(absDir)
 	if err != nil {
 		fatal(err)
+	}
+
+	if *list {
+		names := listStructs(ctx.Local)
+		if len(names) == 0 {
+			fmt.Fprintf(os.Stderr, "envgen: no structs found in %s\n", absDir)
+			os.Exit(1)
+		}
+		for _, name := range names {
+			fmt.Println(name)
+		}
+		return
+	}
+
+	if *typeName == "" {
+		names := listStructs(ctx.Local)
+		fmt.Fprintln(os.Stderr, "envgen: -type is required")
+		if len(names) > 0 {
+			fmt.Fprintf(os.Stderr, "envgen: structs in %s: %s\n", sourcePkg, strings.Join(names, ", "))
+			fmt.Fprintf(os.Stderr, "envgen: example: envgen -dir %s -type %s\n", *dir, names[0])
+		}
+		os.Exit(2)
 	}
 
 	st, filePkg, err := tag.FindStruct(ctx.Local, *typeName)
@@ -73,6 +93,34 @@ func main() {
 	}
 
 	fmt.Printf("envgen: wrote %s for type %s in package %s\n", outPath, *typeName, sourcePkg)
+	fmt.Printf("envgen: add to your struct file:\n//go:generate envgen -type %s -output %s\n", *typeName, outFile)
+}
+
+func listStructs(files []*ast.File) []string {
+	seen := make(map[string]struct{})
+	for _, f := range files {
+		for _, decl := range f.Decls {
+			gen, ok := decl.(*ast.GenDecl)
+			if !ok || gen.Tok != token.TYPE {
+				continue
+			}
+			for _, spec := range gen.Specs {
+				ts, ok := spec.(*ast.TypeSpec)
+				if !ok {
+					continue
+				}
+				if _, ok := ts.Type.(*ast.StructType); ok && ts.Name.IsExported() {
+					seen[ts.Name.Name] = struct{}{}
+				}
+			}
+		}
+	}
+	names := make([]string, 0, len(seen))
+	for name := range seen {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
 }
 
 func loadPackageContext(dir string) (*tag.Context, string, error) {

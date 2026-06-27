@@ -16,58 +16,67 @@
   env                  74 ns/op     0 allocs
 ```
 
+**New here?** → [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) (copy-paste guide, CI, troubleshooting)
+
 ---
 
-## Install
+## Start in 3 steps
+
+**1. Install**
 
 ```bash
 go get github.com/gopherust-io/env@latest
 go install github.com/gopherust-io/env/cmd/envgen@latest
 ```
 
----
-
-## Quick start
+**2. Struct + generate**
 
 ```go
 package config
 
-import "time"
-
 //go:generate envgen -type Config -output config_env_gen.go
 
-type Database struct {
-    Host     string `env:"HOST" required:"true"`
-    Password string `env:"PASSWORD" sensitive:"true"`
-    Port     int    `env:"PORT" default:"5432"`
-}
-
 type Config struct {
-    Started time.Time         `env:"STARTED" layout:"2006-01-02"`
-    Labels  map[string]string `env:"LABELS" sep:"," kvsep:":"`
-    DB      Database          `prefix:"DB_"`
-    BaseURL string            `env:"BASE_URL" default:"${NATS_URL}/api" expand:"true"`
-    Tags    []string          `env:"TAGS" sep:","`
-    Port    int               `env:"PORT" default:"8080"`
-    Timeout time.Duration     `env:"TIMEOUT" default:"10s"`
-    Debug   bool              `env:"DEBUG"`
+    Port  int    `env:"PORT" default:"8080"`
+    Debug bool   `env:"DEBUG"`
+    Host  string `env:"HOST" default:"localhost"`
 }
 ```
 
 ```bash
 go generate ./...
+# or: envgen -type Config
+# list structs: envgen -list
 ```
 
-```go
-_ = env.LoadDotEnv(".env") // optional, local dev
+**3. Load**
 
+```go
 cfg, err := config.LoadConfig()
 if err != nil {
     log.Fatal(err)
 }
-
-log.Printf("config: %+v", cfg.Masked())
+log.Printf("%+v", cfg.Masked()) // safe if you use sensitive:"true"
 ```
+
+Optional local `.env`: `_ = env.LoadDotEnv(".env")` before `LoadConfig()`.
+
+Full-featured example: [examples/basic](examples/basic/). Minimal: [examples/minimal](examples/minimal/).
+
+---
+
+## Cheatsheet
+
+| I want to… | Do this |
+|------------|---------|
+| List struct names | `envgen -list` |
+| Regenerate loaders | `go generate ./...` |
+| Load config | `LoadConfig()` |
+| Reload after env change | `ReloadConfig(&cfg)` |
+| Log without secrets | `cfg.Masked()` |
+| Skip codegen (dev only) | `reflectenv.Parse(&cfg)` |
+| Nested fields | `` DB Database `prefix:"DB_"` `` |
+| `${VAR}` in values | `` `expand:"true"` `` on field |
 
 ---
 
@@ -90,7 +99,7 @@ flowchart LR
 ```
 
 1. Define a struct with `env` tags.
-2. `go generate` runs `envgen` and emits `LoadConfig`, `MustLoadConfig`, and `Masked()`.
+2. `go generate` runs `envgen` → `LoadConfig`, `ReloadConfig`, `Masked()`.
 3. `LoadConfig()` indexes the environment once and assigns fields with zero reflection.
 
 ---
@@ -119,7 +128,7 @@ Nested prefixes compose: `prefix:"DB_"` + `env:"HOST"` → `DB_HOST`.
 | Function | Description |
 |----------|-------------|
 | `LoadConfig()` | Parse env into `Config` |
-| `ReloadConfig(cfg *Config)` | Re-parse env in-place (after `SIGHUP`, `LoadDotEnv`, etc.) |
+| `ReloadConfig(cfg *Config)` | Re-parse env in-place |
 | `LoadConfigFrom(snap)` | Parse from a custom snapshot |
 | `MustLoadConfig()` | Panics on error |
 | `(Config) Masked()` | Copy with sensitive fields redacted |
@@ -141,17 +150,16 @@ cfg, err := config.LoadConfig()
 
 `LoadDotEnv` fills unset variables from a file and refreshes the snapshot. Existing process variables are preserved.
 
-For read-only merging without touching `os.Environ`:
+Read-only merge without touching `os.Environ()`:
 
 ```go
 snap, err := env.SnapshotWithDotEnv(".env")
+cfg, err := config.LoadConfigFrom(snap)
 ```
 
 ---
 
 ## Variable expansion
-
-With the `expand` tag, defaults and values can reference other variables:
 
 ```go
 BaseURL string `env:"BASE_URL" default:"${NATS_URL}/api" expand:"true"`
@@ -161,41 +169,12 @@ Supports `${VAR}` and `$VAR` syntax.
 
 ---
 
-## Performance
-
-```bash
-make bench
-make bench-remote VERSION=v0.4.0
-```
-
-| Fixture | env | caarlos0/env | Speedup |
-|---------|----:|-------------:|--------:|
-| 10 fields | **74 ns**, 0 allocs | 11,619 ns, 220 allocs | **157×** |
-| 50 fields | **398 ns**, 0 allocs | 18,373 ns, 298 allocs | **46×** |
-| 100 fields | **946 ns**, 0 allocs | 26,236 ns, 410 allocs | **28×** |
-
-Measured on darwin/arm64, Apple M4 Pro. Full tables in [bench/README.md](bench/README.md).
-
----
-
-## Migration from caarlos0/env
-
-| caarlos0/env | env |
-|--------------|-----|
-| `env.Parse(&cfg)` | `LoadConfig()` |
-| `envDefault:"8080"` | `default:"8080"` |
-| `envPrefix:"DB_"` | `prefix:"DB_"` |
-| `env:"HOST,required"` | `env:"HOST" required:"true"` |
-
----
-
 ## Hot reload
 
 ```go
 cfg, _ := config.LoadConfig()
-
 os.Setenv("PORT", "9090")
-_ = config.ReloadConfig(&cfg) // refreshes snapshot and updates cfg in-place
+_ = config.ReloadConfig(&cfg)
 ```
 
 ---
@@ -206,28 +185,22 @@ _ = config.ReloadConfig(&cfg) // refreshes snapshot and updates cfg in-place
 import "myapp/internal/db"
 
 type Config struct {
-    DB db.Database `prefix:"DB_"` // db.Database from another package
+    DB db.Database `prefix:"DB_"`
 }
 ```
-
-`envgen` resolves imported struct types via `go/packages`.
 
 ---
 
 ## Reflection fallback (opt-in)
 
-For prototyping or third-party structs without codegen:
-
 ```go
 import "github.com/gopherust-io/env/reflectenv"
 
 var cfg Config
-if err := reflectenv.Parse(&cfg); err != nil {
-    log.Fatal(err)
-}
+reflectenv.Parse(&cfg)
 ```
 
-Uses reflection — slower than generated loaders. Prefer `envgen` in production.
+Slower than codegen — use `envgen` in production.
 
 ---
 
@@ -249,16 +222,39 @@ func (m *Mode) UnmarshalEnv(key, value string) error {
 
 ---
 
+## Migration from caarlos0/env
+
+| caarlos0/env | env |
+|--------------|-----|
+| `env.Parse(&cfg)` | `LoadConfig()` |
+| `envDefault:"8080"` | `default:"8080"` |
+| `envPrefix:"DB_"` | `prefix:"DB_"` |
+| `env:"HOST,required"` | `env:"HOST" required:"true"` |
+
+---
+
+## Performance
+
+```bash
+make bench-remote VERSION=v0.4.0
+```
+
+| Fixture | env | caarlos0/env | Speedup |
+|---------|----:|-------------:|--------:|
+| 10 fields | **74 ns**, 0 allocs | 11,619 ns, 220 allocs | **157×** |
+| 50 fields | **398 ns**, 0 allocs | 18,373 ns, 298 allocs | **46×** |
+| 100 fields | **946 ns**, 0 allocs | 26,236 ns, 410 allocs | **28×** |
+
+---
+
 ## Runtime API
 
 ```go
 snap := env.Snapshot()
 snap.Lookup("PORT")
-
 env.ParseInt("8080")
-env.ParseTime("2026-06-27", "2006-01-02")
-env.Expand("${HOST}:${PORT}", snap)
 env.LoadDotEnv(".env")
+env.Reload()
 ```
 
 ---

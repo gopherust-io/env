@@ -15,11 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Cross-package nested structs** — `envgen` resolves imported types via `go/packages`
 - **`reflectenv` package** — opt-in `reflectenv.Parse(&cfg)` without codegen
 - **`examples/crosspkg`** — nested struct from another package
+- **`docs/GETTING_STARTED.md`** — copy-paste client guide
+- **`examples/minimal`** — smallest working config
+- **`envgen -list`** — list struct types; hints when `-type` is missing
 
 ### Changed
 
 - **`envgen`** uses `go/packages` for import-aware AST resolution
 - Generated `LoadConfig` delegates to `ReloadConfig`
+- **README** — 3-step quick start, cheatsheet, link to getting started guide
 
 ### Known limitations (updated)
 
