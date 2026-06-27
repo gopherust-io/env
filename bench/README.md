@@ -9,12 +9,12 @@ make bench
 Published module (no clone). `go test` does not accept `@version`; use:
 
 ```bash
-make bench-remote VERSION=v0.3.0
+make bench-remote VERSION=v0.4.0
 # or
-VERSION=v0.3.0 ./bench/remote.sh
+VERSION=v0.4.0 ./bench/remote.sh
 ```
 
-Requires **Go 1.26.4+**. The bench submodule is tagged as `bench/v0.3.0` (same commit as root `v0.3.0`).
+Requires **Go 1.26.4+**. The bench submodule is tagged as `bench/v0.4.0` (same commit as root `v0.4.0`).
 
 ## Regenerate fixtures
 

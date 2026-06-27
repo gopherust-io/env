@@ -165,7 +165,7 @@ Supports `${VAR}` and `$VAR` syntax.
 
 ```bash
 make bench
-make bench-remote VERSION=v0.3.0
+make bench-remote VERSION=v0.4.0
 ```
 
 | Fixture | env | caarlos0/env | Speedup |

@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **golangci-lint** in CI — `govet` (incl. `fieldalignment`), `staticcheck`, `errcheck`, `modernize`, `prealloc`, `unconvert`, `makezero`, `nilerr`, `errorlint`, `durationcheck`, `misspell`
 - **`make lint`** — local lint with workspace sync
 - **`bench/remote.sh`** — run published benchmarks without cloning (`make bench-remote VERSION=v0.3.0`)
-- **`bench/v0.3.0`** submodule tag for `go get github.com/gopherust-io/env/bench@v0.3.0`
+- **`bench/v0.4.0`** submodule tag for `go get github.com/gopherust-io/env/bench@v0.4.0`
 
 ### Changed
 

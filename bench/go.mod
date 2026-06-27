@@ -4,7 +4,7 @@ go 1.26.4
 
 require (
 	github.com/caarlos0/env/v11 v11.4.1
-	github.com/gopherust-io/env v0.3.0
+	github.com/gopherust-io/env v0.4.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/muzzii255/goenv v1.0.0
