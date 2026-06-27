@@ -121,6 +121,10 @@ func emitLeafLoad(b *bytes.Buffer, f tag.Field, target, prefix string) {
 	}
 	b.WriteString("\t\t} else {\n")
 
+	if f.Expand {
+		b.WriteString("\t\t\traw = env.Expand(raw, snap)\n")
+	}
+
 	if f.Unmarshal {
 		fmt.Fprintf(b, "\t\t\tif err := %s.%s.UnmarshalEnv(key, raw); err != nil {\n", target, f.Name)
 		fmt.Fprintf(b, "\t\t\t\tenv.AppendParse(&errs, %q, key, raw, err)\n", fieldLabel)
@@ -136,7 +140,11 @@ func emitDefaultAssign(b *bytes.Buffer, f tag.Field, target string) {
 	val := f.Default
 	switch {
 	case f.GoType == "string":
-		fmt.Fprintf(b, "\t\t\t%s.%s = %q\n", target, f.Name, val)
+		if f.Expand {
+			fmt.Fprintf(b, "\t\t\t%s.%s = env.Expand(%q, snap)\n", target, f.Name, val)
+		} else {
+			fmt.Fprintf(b, "\t\t\t%s.%s = %q\n", target, f.Name, val)
+		}
 	case f.GoType == "bool":
 		fmt.Fprintf(b, "\t\t\tv, err := env.ParseBool(%q)\n", val)
 		b.WriteString("\t\t\tif err != nil {\n")
@@ -145,7 +153,26 @@ func emitDefaultAssign(b *bytes.Buffer, f tag.Field, target string) {
 		fmt.Fprintf(b, "\t\t\t\t%s.%s = v\n", target, f.Name)
 		b.WriteString("\t\t\t}\n")
 	case f.GoType == "time.Duration":
-		fmt.Fprintf(b, "\t\t\tv, err := env.ParseDuration(%q)\n", val)
+		if f.Expand {
+			fmt.Fprintf(b, "\t\t\tv, err := env.ParseDuration(env.Expand(%q, snap))\n", val)
+		} else {
+			fmt.Fprintf(b, "\t\t\tv, err := env.ParseDuration(%q)\n", val)
+		}
+		b.WriteString("\t\t\tif err != nil {\n")
+		fmt.Fprintf(b, "\t\t\t\tenv.AppendParse(&errs, %q, key, %q, err)\n", f.FieldPath, val)
+		b.WriteString("\t\t\t} else {\n")
+		fmt.Fprintf(b, "\t\t\t\t%s.%s = v\n", target, f.Name)
+		b.WriteString("\t\t\t}\n")
+	case f.GoType == "time.Time":
+		layout := f.Layout
+		if layout == "" {
+			layout = "2006-01-02T15:04:05Z07:00"
+		}
+		if f.Expand {
+			fmt.Fprintf(b, "\t\t\tv, err := env.ParseTime(env.Expand(%q, snap), %q)\n", val, layout)
+		} else {
+			fmt.Fprintf(b, "\t\t\tv, err := env.ParseTime(%q, %q)\n", val, layout)
+		}
 		b.WriteString("\t\t\tif err != nil {\n")
 		fmt.Fprintf(b, "\t\t\t\tenv.AppendParse(&errs, %q, key, %q, err)\n", f.FieldPath, val)
 		b.WriteString("\t\t\t} else {\n")
@@ -214,6 +241,17 @@ func emitParseAssign(b *bytes.Buffer, f tag.Field, target, fieldLabel string) {
 		b.WriteString("\t\t\t}\n")
 	case f.GoType == "time.Duration":
 		b.WriteString("\t\t\tv, err := env.ParseDuration(raw)\n")
+		b.WriteString("\t\t\tif err != nil {\n")
+		fmt.Fprintf(b, "\t\t\t\tenv.AppendParse(&errs, %q, key, raw, err)\n", fieldLabel)
+		b.WriteString("\t\t\t} else {\n")
+		fmt.Fprintf(b, "\t\t\t\t%s.%s = v\n", target, f.Name)
+		b.WriteString("\t\t\t}\n")
+	case f.GoType == "time.Time":
+		layout := f.Layout
+		if layout == "" {
+			layout = "2006-01-02T15:04:05Z07:00"
+		}
+		fmt.Fprintf(b, "\t\t\tv, err := env.ParseTime(raw, %q)\n", layout)
 		b.WriteString("\t\t\tif err != nil {\n")
 		fmt.Fprintf(b, "\t\t\t\tenv.AppendParse(&errs, %q, key, raw, err)\n", fieldLabel)
 		b.WriteString("\t\t\t} else {\n")

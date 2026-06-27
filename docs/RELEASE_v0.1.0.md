@@ -37,7 +37,7 @@ Benchmarks on Apple M4 Pro (darwin/arm64):
 | 50 fields | **398 ns**, 0 allocs | 18,373 ns, 298 allocs |
 | 100 fields | **946 ns**, 0 allocs | 26,236 ns, 410 allocs |
 
-Run benchmarks yourself:
+Run benchmarks:
 
 ```bash
 go test -bench=. -benchmem -count=1 github.com/gopherust-io/env/bench@v0.1.0

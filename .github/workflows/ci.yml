@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.4"
+          cache: true
+
+      - name: Test
+        run: go test -race ./...
+
+      - name: Test bench module
+        run: |
+          cp go.work.example go.work
+          go work sync
+          cd bench && go test -race -run=^$ ./...
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.4"
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Vet bench module
+        run: |
+          cp go.work.example go.work
+          go work sync
+          cd bench && go vet ./...

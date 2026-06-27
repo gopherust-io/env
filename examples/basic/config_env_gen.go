@@ -144,5 +144,28 @@ func loadConfig(cfg *Config, snap *env.EnvSnapshot) error {
 			}
 		}
 	}
+	{
+		key := "STARTED"
+		raw, ok := snap.Lookup(key)
+		if !ok || raw == "" {
+		} else {
+			v, err := env.ParseTime(raw, "2006-01-02")
+			if err != nil {
+				env.AppendParse(&errs, "Started", key, raw, err)
+			} else {
+				cfg.Started = v
+			}
+		}
+	}
+	{
+		key := "BASE_URL"
+		raw, ok := snap.Lookup(key)
+		if !ok || raw == "" {
+			cfg.BaseURL = env.Expand("${NATS_URL}/api", snap)
+		} else {
+			raw = env.Expand(raw, snap)
+			cfg.BaseURL = raw
+		}
+	}
 	return env.NewError(errs)
 }

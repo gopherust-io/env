@@ -1,29 +1,73 @@
 # env
 
+[![CI](https://github.com/gopherust-io/env/actions/workflows/ci.yml/badge.svg)](https://github.com/gopherust-io/env/actions/workflows/ci.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/gopherust-io/env.svg)](https://pkg.go.dev/github.com/gopherust-io/env)
+[![Go Report Card](https://goreportcard.com/badge/github.com/gopherust-io/env)](https://goreportcard.com/report/github.com/gopherust-io/env)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 **Blazing-fast, zero-allocation environment configuration for Go.**
 
-`github.com/gopherust-io/env` parses environment variables into typed structs using compile-time code generation. No reflection at runtime. No external dependencies in your binary. One `os.Environ()` pass, then direct field assignment.
+`github.com/gopherust-io/env` parses environment variables into typed structs using compile-time code generation. No reflection at runtime. No external dependencies. One `os.Environ()` pass, then direct field assignment.
 
 ```text
   caarlos0/env   11,619 ns/op   220 allocs
   viper           3,146 ns/op    70 allocs
   stdlib            150 ns/op     0 allocs
-  env                  74 ns/op     0 allocs   ← you are here
+  env                  74 ns/op     0 allocs
 ```
 
 ---
 
-## Why env?
+## Install
 
-Most Go config libraries parse env vars with reflection on every startup. That costs CPU, heap allocations, and GC pressure — especially in services with large configs or tight cold-start budgets.
+```bash
+go get github.com/gopherust-io/env@latest
+go install github.com/gopherust-io/env/cmd/envgen@latest
+```
 
-| Approach | Startup cost | Maintenance |
-|----------|--------------|-------------|
-| Hand-written `os.Getenv` | Fast, zero alloc | Verbose, easy to break |
-| Reflection (`caarlos0/env`, `viper`, …) | Slow, many allocs | Convenient tags |
-| **env (codegen)** | **Fast, zero alloc** | **Tags + `go generate`** |
+---
 
-You keep the ergonomics of struct tags. The generator emits a loader tailored to your config — the compiler inlines primitive parsers, and the runtime never touches `reflect`.
+## Quick start
+
+```go
+package config
+
+import "time"
+
+//go:generate envgen -type Config -output config_env_gen.go
+
+type Database struct {
+    Host     string `env:"HOST" required`
+    Port     int    `env:"PORT" default:"5432"`
+    Password string `env:"PASSWORD" sensitive`
+}
+
+type Config struct {
+    Port    int               `env:"PORT" default:"8080"`
+    Debug   bool              `env:"DEBUG"`
+    Timeout time.Duration     `env:"TIMEOUT" default:"10s"`
+    Started time.Time         `env:"STARTED" layout:"2006-01-02"`
+    BaseURL string            `env:"BASE_URL" default:"${NATS_URL}/api" expand`
+    DB      Database          `prefix:"DB_"`
+    Tags    []string          `env:"TAGS" sep:","`
+    Labels  map[string]string `env:"LABELS" sep:"," kvsep:":"`
+}
+```
+
+```bash
+go generate ./...
+```
+
+```go
+_ = env.LoadDotEnv(".env") // optional, local dev
+
+cfg, err := config.LoadConfig()
+if err != nil {
+    log.Fatal(err)
+}
+
+log.Printf("config: %+v", cfg.Masked())
+```
 
 ---
 
@@ -33,7 +77,7 @@ You keep the ergonomics of struct tags. The generator emits a loader tailored to
 flowchart LR
     subgraph compile [Compile time]
         Struct[Config struct]
-        Envgen[cmd/envgen]
+        Envgen[envgen]
         Gen[config_env_gen.go]
         Struct --> Envgen --> Gen
     end
@@ -46,64 +90,8 @@ flowchart LR
 ```
 
 1. Define a struct with `env` tags.
-2. Run `go generate` — `envgen` emits `LoadConfig`, `MustLoadConfig`, and optionally `Masked()`.
-3. At startup, call `LoadConfig()`. One environment snapshot, zero reflection, all errors collected in a single pass.
-
----
-
-## Install
-
-```bash
-go get github.com/gopherust-io/env
-```
-
-**Zero runtime dependencies.** The library uses only the Go standard library. Competitor libraries are isolated in a separate [`bench/`](bench/) module and never end up in your `go.mod`.
-
----
-
-## Quick start
-
-**1. Config struct**
-
-```go
-package config
-
-import "time"
-
-//go:generate go run github.com/gopherust-io/env/cmd/envgen -type Config -output config_env_gen.go
-
-type Database struct {
-    Host     string `env:"HOST" required`
-    Port     int    `env:"PORT" default:"5432"`
-    Password string `env:"PASSWORD" sensitive`
-}
-
-type Config struct {
-    Port    int               `env:"PORT" default:"8080"`
-    Debug   bool              `env:"DEBUG"`
-    Timeout time.Duration     `env:"TIMEOUT" default:"10s"`
-    DB      Database          `prefix:"DB_"`
-    Tags    []string          `env:"TAGS" sep:","`
-    Labels  map[string]string `env:"LABELS" sep:"," kvsep:":"`
-}
-```
-
-**2. Generate**
-
-```bash
-go generate ./...
-```
-
-**3. Load**
-
-```go
-cfg, err := config.LoadConfig()
-if err != nil {
-    log.Fatal(err)
-}
-
-log.Printf("config: %+v", cfg.Masked()) // secrets redacted
-```
+2. `go generate` runs `envgen` and emits `LoadConfig`, `MustLoadConfig`, and `Masked()`.
+3. `LoadConfig()` indexes the environment once and assigns fields with zero reflection.
 
 ---
 
@@ -117,6 +105,8 @@ log.Printf("config: %+v", cfg.Masked()) // secrets redacted
 | `prefix:"FOO_"` | Prefix for nested struct fields |
 | `sep:","` | Slice separator (default `,`) |
 | `kvsep:":"` | Map key/value separator (default `:`) |
+| `layout:"..."` | `time.Time` parse layout (default RFC3339) |
+| `expand` | Expand `${VAR}` and `$VAR` in values |
 | `sensitive` | Redact in `Masked()` |
 | `env:"-"` | Skip field |
 
@@ -126,15 +116,13 @@ Nested prefixes compose: `prefix:"DB_"` + `env:"HOST"` → `DB_HOST`.
 
 ## Generated API
 
-For a struct named `Config`, envgen generates:
-
 | Function | Description |
 |----------|-------------|
-| `LoadConfig()` | Parse env into `Config`, return all errors |
-| `MustLoadConfig()` | Same, but panics on error |
-| `(Config) Masked()` | Copy with `sensitive` fields replaced by `***` |
+| `LoadConfig()` | Parse env into `Config` |
+| `MustLoadConfig()` | Panics on error |
+| `(Config) Masked()` | Copy with sensitive fields redacted |
 
-Errors are aggregated — one failed parse does not hide other problems:
+Errors are collected in one pass:
 
 ```text
 env: DB.Host (DB_HOST): required; Port (PORT): parse: strconv.Atoi: parsing "abc": invalid syntax
@@ -142,91 +130,64 @@ env: DB.Host (DB_HOST): required; Port (PORT): parse: strconv.Atoi: parsing "abc
 
 ---
 
+## Local development (.env)
+
+```go
+_ = env.LoadDotEnv(".env")
+cfg, err := config.LoadConfig()
+```
+
+`LoadDotEnv` fills unset variables from a file and refreshes the snapshot. Existing process variables are preserved.
+
+For read-only merging without touching `os.Environ`:
+
+```go
+snap, err := env.SnapshotWithDotEnv(".env")
+```
+
+---
+
+## Variable expansion
+
+With the `expand` tag, defaults and values can reference other variables:
+
+```go
+BaseURL string `env:"BASE_URL" default:"${NATS_URL}/api" expand`
+```
+
+Supports `${VAR}` and `$VAR` syntax.
+
+---
+
 ## Performance
-
-Benchmarks compare **stdlib**, **caarlos0/env**, **cleanenv**, **goenv**, **envconfig**, **viper**, and **env** on identical configs.
-
-Run locally:
 
 ```bash
 make bench
-```
-
-Run without cloning (after release):
-
-```bash
 go test -bench=. -benchmem -count=1 github.com/gopherust-io/env/bench@latest
 ```
 
-Results on **darwin/arm64, Apple M4 Pro**:
+| Fixture | env | caarlos0/env | Speedup |
+|---------|----:|-------------:|--------:|
+| 10 fields | **74 ns**, 0 allocs | 11,619 ns, 220 allocs | **157×** |
+| 50 fields | **398 ns**, 0 allocs | 18,373 ns, 298 allocs | **46×** |
+| 100 fields | **946 ns**, 0 allocs | 26,236 ns, 410 allocs | **28×** |
 
-### Small — 10 fields
-
-| Library | ns/op | allocs | vs env |
-|---------|------:|-------:|-------:|
-| **env** | **74** | **0** | 1× |
-| stdlib | 150 | 0 | 2× slower |
-| cleanenv | 2,818 | 57 | 38× |
-| viper | 3,146 | 70 | 43× |
-| goenv | 5,402 | 8 | 73× |
-| caarlos0/env | 11,619 | 220 | **157×** |
-
-### Medium — 50 fields
-
-| Library | ns/op | allocs | vs env |
-|---------|------:|-------:|-------:|
-| **env** | **398** | **0** | 1× |
-| stdlib | 695 | 0 | 1.7× |
-| viper | 10,085 | 236 | 25× |
-| goenv | 7,501 | 6 | 19× |
-| caarlos0/env | 18,373 | 298 | **46×** |
-
-### Large — 100 fields
-
-| Library | ns/op | allocs | vs env |
-|---------|------:|-------:|-------:|
-| **env** | **946** | **0** | 1× |
-| stdlib | 1,509 | 0 | 1.6× |
-| goenv | 10,431 | 6 | 11× |
-| viper | 18,724 | 439 | 20× |
-| caarlos0/env | 26,236 | 410 | **28×** |
-
-env stays at **0 allocations** across all sizes. Reflection-based libraries allocate hundreds of times per parse.
+Measured on darwin/arm64, Apple M4 Pro. Full tables in [bench/README.md](bench/README.md).
 
 ---
 
 ## Migration from caarlos0/env
 
-Not a drop-in replacement, but the mapping is simple:
-
 | caarlos0/env | env |
 |--------------|-----|
-| `env.Parse(&cfg)` | `cfg, err := LoadConfig()` |
+| `env.Parse(&cfg)` | `LoadConfig()` |
 | `envDefault:"8080"` | `default:"8080"` |
-| `envPrefix:"DB_"` | `prefix:"DB_"` on nested struct |
+| `envPrefix:"DB_"` | `prefix:"DB_"` |
 | `env:"HOST,required"` | `env:"HOST" required` |
-
-<details>
-<summary>Before / after example</summary>
-
-```go
-// Before
-var cfg Config
-if err := env.Parse(&cfg); err != nil { ... }
-
-// After
-//go:generate go run github.com/gopherust-io/env/cmd/envgen -type Config
-cfg, err := LoadConfig()
-if err != nil { ... }
-```
-
-</details>
 
 ---
 
 ## Custom types
-
-Implement `env.Unmarshaler` on a pointer receiver:
 
 ```go
 type Mode string
@@ -242,28 +203,25 @@ func (m *Mode) UnmarshalEnv(key, value string) error {
 }
 ```
 
-envgen detects the method and emits a call automatically.
-
 ---
 
-## Runtime primitives
-
-Generated loaders use these internally; you can call them directly:
+## Runtime API
 
 ```go
 snap := env.Snapshot()
+snap.Lookup("PORT")
 
 env.ParseInt("8080")
-env.ParseDuration("10s")
-env.ParseStringSlice("a,b,c", ",")
-env.ParseStringMap("k1:v1,k2:v2", ",", ":")
+env.ParseTime("2026-06-27", "2006-01-02")
+env.Expand("${HOST}:${PORT}", snap)
+env.LoadDotEnv(".env")
 ```
 
 ---
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for release history.
+See [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 

@@ -11,6 +11,8 @@ func TestLoadConfig(t *testing.T) {
 	t.Setenv("PORT", "9090")
 	t.Setenv("DEBUG", "true")
 	t.Setenv("TIMEOUT", "5s")
+	t.Setenv("STARTED", "2026-06-27")
+	t.Setenv("NATS_URL", "nats://localhost:4222")
 	t.Setenv("DB_HOST", "localhost")
 	t.Setenv("DB_PORT", "5433")
 	t.Setenv("DB_PASSWORD", "secret")
@@ -28,6 +30,9 @@ func TestLoadConfig(t *testing.T) {
 	}
 	if len(cfg.Tags) != 3 || cfg.Labels["tier"] != "1" {
 		t.Fatalf("unexpected tags/labels: %+v %+v", cfg.Tags, cfg.Labels)
+	}
+	if cfg.BaseURL != "nats://localhost:4222/api" {
+		t.Fatalf("BaseURL = %q", cfg.BaseURL)
 	}
 
 	masked := cfg.Masked()

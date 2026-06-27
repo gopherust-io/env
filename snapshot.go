@@ -25,7 +25,7 @@ func Snapshot() *EnvSnapshot {
 	return defaultSnap.Load()
 }
 
-// ResetSnapshot rebuilds the cached snapshot. Intended for tests.
+// ResetSnapshot rebuilds the cached snapshot.
 func ResetSnapshot() {
 	defaultSnap.Store(FromEnviron(os.Environ()))
 }

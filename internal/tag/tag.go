@@ -20,6 +20,8 @@ type Field struct {
 	Prefix     string
 	Sep        string
 	KvSep      string
+	Layout     string
+	Expand     bool
 	Children   []Field
 	IsNested   bool
 	IsPointer  bool
@@ -99,6 +101,8 @@ func ParseField(f *ast.Field, prefix, pathPrefix string, files []*ast.File) ([]F
 			Prefix:    fieldPrefix,
 			Sep:       tags.Sep,
 			KvSep:     tags.KvSep,
+			Layout:    tags.Layout,
+			Expand:    tags.Expand,
 			IsNested:  false,
 			IsPointer: isPtr,
 			IsSlice:   isSlice,
@@ -173,8 +177,10 @@ type parsedTags struct {
 	Prefix    string
 	Sep       string
 	KvSep     string
+	Layout    string
 	Required  bool
 	Sensitive bool
+	Expand    bool
 }
 
 func parseTags(tagLit *ast.BasicLit) parsedTags {
@@ -199,6 +205,8 @@ func parseTags(tagLit *ast.BasicLit) parsedTags {
 				tags.Required = true
 			case "sensitive":
 				tags.Sensitive = true
+			case "expand":
+				tags.Expand = true
 			}
 			continue
 		}
@@ -220,6 +228,8 @@ func parseTags(tagLit *ast.BasicLit) parsedTags {
 			tags.Sep = v
 		case "kvsep":
 			tags.KvSep = v
+		case "layout":
+			tags.Layout = v
 		}
 	}
 	return tags
@@ -296,7 +306,7 @@ func isNested(goType string, isPtr, isSlice, isMap bool) bool {
 	switch goType {
 	case "string", "bool", "int", "int8", "int16", "int32", "int64",
 		"uint", "uint8", "uint16", "uint32", "uint64",
-		"float32", "float64", "time.Duration":
+		"float32", "float64", "time.Duration", "time.Time":
 		return false
 	default:
 		return !strings.HasPrefix(goType, "[]") && !strings.HasPrefix(goType, "map[")

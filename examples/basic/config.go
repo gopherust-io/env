@@ -2,7 +2,7 @@ package basic
 
 import "time"
 
-//go:generate go run ../../cmd/envgen -type Config -output config_env_gen.go
+//go:generate envgen -type Config -output config_env_gen.go
 
 type Database struct {
 	Host     string `env:"HOST" required`
@@ -17,6 +17,8 @@ type Config struct {
 	DB      Database      `prefix:"DB_"`
 	Tags    []string      `env:"TAGS" sep:","`
 	Labels  map[string]string `env:"LABELS" sep:"," kvsep:":"`
+	Started time.Time         `env:"STARTED" layout:"2006-01-02"`
+	BaseURL string            `env:"BASE_URL" default:"${NATS_URL}/api" expand`
 }
 
 func Load() (Config, error) {

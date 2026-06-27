@@ -82,6 +82,13 @@ func ParseDuration(s string) (time.Duration, error) {
 	return time.ParseDuration(s)
 }
 
+func ParseTime(s, layout string) (time.Time, error) {
+	if layout == "" {
+		layout = time.RFC3339
+	}
+	return time.Parse(layout, s)
+}
+
 func ParseStringSlice(s, sep string) ([]string, error) {
 	if s == "" {
 		return nil, nil
