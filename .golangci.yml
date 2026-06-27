@@ -20,25 +20,23 @@ linters:
     - errorlint
     - durationcheck
     - misspell
+  settings:
+    govet:
+      enable-all: true
+      enable:
+        - fieldalignment
+      disable:
+        - shadow
+    staticcheck:
+      checks:
+        - all
+        - -ST1000
+        - -ST1003
+  exclusions:
+    paths:
+      - '.*_gen\.go'
 
 formatters:
   enable:
     - gofmt
     - goimports
-
-linters-settings:
-  govet:
-    enable-all: true
-    enable:
-      - fieldalignment
-    disable:
-      - shadow
-  staticcheck:
-    checks:
-      - all
-      - -ST1000
-      - -ST1003
-
-issues:
-  exclude-files:
-    - '.*_gen\.go'
