@@ -261,6 +261,10 @@ env.ParseStringMap("k1:v1,k2:v2", ",", ":")
 
 ---
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for release history.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
