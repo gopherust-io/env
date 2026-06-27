@@ -41,6 +41,28 @@ func TestLoadConfig(t *testing.T) {
 	}
 }
 
+func TestReloadConfig(t *testing.T) {
+	t.Setenv("PORT", "8080")
+	t.Setenv("DB_HOST", "localhost")
+	env.ResetSnapshot()
+
+	cfg, err := basic.LoadConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Port != 8080 {
+		t.Fatalf("port = %d", cfg.Port)
+	}
+
+	t.Setenv("PORT", "9090")
+	if err := basic.ReloadConfig(&cfg); err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Port != 9090 {
+		t.Fatalf("after reload port = %d", cfg.Port)
+	}
+}
+
 func TestRequiredField(t *testing.T) {
 	t.Setenv("PORT", "8080")
 	t.Setenv("DB_HOST", "")

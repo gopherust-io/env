@@ -36,7 +36,7 @@ func TestCollectFields(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fields, err := tag.CollectFields([]*ast.File{f}, st, "")
+	fields, err := tag.CollectFields(&tag.Context{Local: []*ast.File{f}}, st, "")
 	if err != nil {
 		t.Fatal(err)
 	}

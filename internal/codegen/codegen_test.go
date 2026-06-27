@@ -23,6 +23,8 @@ func TestGenerateFlatStruct(t *testing.T) {
 	out := string(src)
 	for _, want := range []string{
 		"func LoadConfig() (Config, error)",
+		"func ReloadConfig(cfg *Config) error",
+		"func LoadConfigFrom(snap *env.EnvSnapshot) (Config, error)",
 		"func MustLoadConfig() Config",
 		"env.ParseInt",
 		"env.ParseBool",

@@ -34,7 +34,7 @@ type Field struct {
 	Unmarshal bool
 }
 
-func ParseField(f *ast.Field, prefix, pathPrefix string, files []*ast.File) ([]Field, error) {
+func ParseField(f *ast.Field, prefix, pathPrefix string, ctx *Context) ([]Field, error) {
 	if f.Names == nil {
 		return nil, nil
 	}
@@ -73,7 +73,7 @@ func ParseField(f *ast.Field, prefix, pathPrefix string, files []*ast.File) ([]F
 		}
 
 		if isNested(goType, isPtr, isSlice, isMap) && envKey == "" {
-			nested, err := parseNestedType(files, typeExpr, fieldPrefix, fieldPath, name.Name)
+			nested, err := parseNestedType(ctx, typeExpr, fieldPrefix, fieldPath, name.Name)
 			if err != nil {
 				return nil, err
 			}
@@ -87,7 +87,7 @@ func ParseField(f *ast.Field, prefix, pathPrefix string, files []*ast.File) ([]F
 			envKey = toSnakeUpper(name.Name)
 		}
 
-		unmarshal := hasUnmarshalEnv(files, typeExpr)
+		unmarshal := ctx.hasUnmarshal(typeExpr)
 
 		out = append(out, Field{
 			Name:      name.Name,
@@ -118,20 +118,23 @@ func ParseField(f *ast.Field, prefix, pathPrefix string, files []*ast.File) ([]F
 	return out, nil
 }
 
-func parseNestedType(files []*ast.File, typeExpr ast.Expr, prefix, pathPrefix, parentName string) ([]Field, error) {
+func parseNestedType(ctx *Context, typeExpr ast.Expr, prefix, pathPrefix, parentName string) ([]Field, error) {
 	expr := typeExpr
 	for {
 		switch t := expr.(type) {
 		case *ast.StarExpr:
 			expr = t.X
 		case *ast.Ident, *ast.SelectorExpr:
-			st, _ := ResolveStructType(files, expr)
+			st, err := ctx.resolveStruct(expr)
+			if err != nil {
+				return nil, fmt.Errorf("field %s: nested type %s: %w", parentName, typeString(typeExpr), err)
+			}
 			if st == nil {
-				return nil, nil
+				return nil, fmt.Errorf("field %s: nested type %s not found", parentName, typeString(typeExpr))
 			}
 			var out []Field
 			for _, f := range st.Fields.List {
-				nested, err := ParseField(f, prefix, pathPrefix, files)
+				nested, err := ParseField(f, prefix, pathPrefix, ctx)
 				if err != nil {
 					return nil, err
 				}
@@ -149,7 +152,7 @@ func parseNestedType(files []*ast.File, typeExpr ast.Expr, prefix, pathPrefix, p
 		case *ast.StructType:
 			var out []Field
 			for _, f := range t.Fields.List {
-				nested, err := ParseField(f, prefix, pathPrefix, files)
+				nested, err := ParseField(f, prefix, pathPrefix, ctx)
 				if err != nil {
 					return nil, err
 				}
@@ -384,38 +387,13 @@ func FindStruct(files []*ast.File, typeName string) (*ast.StructType, string, er
 }
 
 func ResolveStructType(files []*ast.File, expr ast.Expr) (*ast.StructType, error) {
-	switch t := expr.(type) {
-	case *ast.StructType:
-		return t, nil
-	case *ast.Ident:
-		for _, f := range files {
-			for _, decl := range f.Decls {
-				gen, ok := decl.(*ast.GenDecl)
-				if !ok || gen.Tok != token.TYPE {
-					continue
-				}
-				for _, spec := range gen.Specs {
-					ts, ok := spec.(*ast.TypeSpec)
-					if !ok || ts.Name.Name != t.Name {
-						continue
-					}
-					st, ok := ts.Type.(*ast.StructType)
-					if ok {
-						return st, nil
-					}
-				}
-			}
-		}
-	case *ast.StarExpr:
-		return ResolveStructType(files, t.X)
-	}
-	return nil, fmt.Errorf("unsupported struct type %T", expr)
+	return resolveStructType(files, expr)
 }
 
-func CollectFields(files []*ast.File, st *ast.StructType, pathPrefix string) ([]Field, error) {
+func CollectFields(ctx *Context, st *ast.StructType, pathPrefix string) ([]Field, error) {
 	var out []Field
 	for _, f := range st.Fields.List {
-		fields, err := ParseField(f, "", pathPrefix, files)
+		fields, err := ParseField(f, "", pathPrefix, ctx)
 		if err != nil {
 			return nil, err
 		}

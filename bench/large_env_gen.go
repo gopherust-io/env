@@ -7,7 +7,25 @@ import (
 )
 
 func LoadLargeConfig() (LargeConfig, error) {
-	snap := env.Snapshot()
+	var cfg LargeConfig
+	if err := ReloadLargeConfig(&cfg); err != nil {
+		return cfg, err
+	}
+	return cfg, nil
+}
+
+func ReloadLargeConfig(cfg *LargeConfig) error {
+	env.Reload()
+	return loadLargeConfig(cfg, env.Snapshot())
+}
+
+func MustReloadLargeConfig(cfg *LargeConfig) {
+	if err := ReloadLargeConfig(cfg); err != nil {
+		panic(err)
+	}
+}
+
+func LoadLargeConfigFrom(snap *env.EnvSnapshot) (LargeConfig, error) {
 	var cfg LargeConfig
 	if err := loadLargeConfig(&cfg, snap); err != nil {
 		return cfg, err

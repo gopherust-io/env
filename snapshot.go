@@ -30,6 +30,12 @@ func ResetSnapshot() {
 	defaultSnap.Store(FromEnviron(os.Environ()))
 }
 
+// Reload refreshes the cached snapshot from os.Environ().
+// Generated ReloadConfig calls this before re-parsing.
+func Reload() {
+	ResetSnapshot()
+}
+
 func FromEnviron(environ []string) *EnvSnapshot {
 	m := make(map[string]string, len(environ))
 	for _, kv := range environ {

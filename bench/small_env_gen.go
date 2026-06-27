@@ -7,7 +7,25 @@ import (
 )
 
 func LoadSmallConfig() (SmallConfig, error) {
-	snap := env.Snapshot()
+	var cfg SmallConfig
+	if err := ReloadSmallConfig(&cfg); err != nil {
+		return cfg, err
+	}
+	return cfg, nil
+}
+
+func ReloadSmallConfig(cfg *SmallConfig) error {
+	env.Reload()
+	return loadSmallConfig(cfg, env.Snapshot())
+}
+
+func MustReloadSmallConfig(cfg *SmallConfig) {
+	if err := ReloadSmallConfig(cfg); err != nil {
+		panic(err)
+	}
+}
+
+func LoadSmallConfigFrom(snap *env.EnvSnapshot) (SmallConfig, error) {
 	var cfg SmallConfig
 	if err := loadSmallConfig(&cfg, snap); err != nil {
 		return cfg, err

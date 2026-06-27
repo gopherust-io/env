@@ -32,7 +32,25 @@ func Generate(opts Options) ([]byte, error) {
 	b.WriteString(")\n\n")
 
 	fmt.Fprintf(&b, "func Load%s() (%s, error) {\n", opts.TypeName, opts.TypeName)
-	b.WriteString("\tsnap := env.Snapshot()\n")
+	b.WriteString("\tvar cfg " + opts.TypeName + "\n")
+	fmt.Fprintf(&b, "\tif err := Reload%s(&cfg); err != nil {\n", opts.TypeName)
+	b.WriteString("\t\treturn cfg, err\n")
+	b.WriteString("\t}\n")
+	b.WriteString("\treturn cfg, nil\n")
+	b.WriteString("}\n\n")
+
+	fmt.Fprintf(&b, "func Reload%s(cfg *%s) error {\n", opts.TypeName, opts.TypeName)
+	b.WriteString("\tenv.Reload()\n")
+	fmt.Fprintf(&b, "\treturn load%s(cfg, env.Snapshot())\n", opts.TypeName)
+	b.WriteString("}\n\n")
+
+	fmt.Fprintf(&b, "func MustReload%s(cfg *%s) {\n", opts.TypeName, opts.TypeName)
+	fmt.Fprintf(&b, "\tif err := Reload%s(cfg); err != nil {\n", opts.TypeName)
+	b.WriteString("\t\tpanic(err)\n")
+	b.WriteString("\t}\n")
+	b.WriteString("}\n\n")
+
+	fmt.Fprintf(&b, "func Load%sFrom(snap *env.EnvSnapshot) (%s, error) {\n", opts.TypeName, opts.TypeName)
 	fmt.Fprintf(&b, "\tvar cfg %s\n", opts.TypeName)
 	fmt.Fprintf(&b, "\tif err := load%s(&cfg, snap); err != nil {\n", opts.TypeName)
 	b.WriteString("\t\treturn cfg, err\n")

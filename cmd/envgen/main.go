@@ -4,11 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"go/ast"
-	"go/parser"
-	"go/token"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"golang.org/x/tools/go/packages"
 
 	"github.com/gopherust-io/env/internal/codegen"
 	"github.com/gopherust-io/env/internal/tag"
@@ -32,18 +32,17 @@ func main() {
 		fatal(err)
 	}
 
-	fset := token.NewFileSet()
-	files, sourcePkg, err := loadPackageFiles(fset, absDir)
+	ctx, sourcePkg, err := loadPackageContext(absDir)
 	if err != nil {
 		fatal(err)
 	}
 
-	st, filePkg, err := tag.FindStruct(files, *typeName)
+	st, filePkg, err := tag.FindStruct(ctx.Local, *typeName)
 	if err != nil {
 		fatal(err)
 	}
 
-	fields, err := tag.CollectFields(files, st, "")
+	fields, err := tag.CollectFields(ctx, st, "")
 	if err != nil {
 		fatal(err)
 	}
@@ -76,47 +75,48 @@ func main() {
 	fmt.Printf("envgen: wrote %s for type %s in package %s\n", outPath, *typeName, sourcePkg)
 }
 
-func loadPackageFiles(fset *token.FileSet, dir string) ([]*ast.File, string, error) {
-	entries, err := os.ReadDir(dir)
+func loadPackageContext(dir string) (*tag.Context, string, error) {
+	absDir, err := filepath.Abs(dir)
 	if err != nil {
 		return nil, "", err
 	}
 
-	var files []*ast.File
-	var pkgName string
-
-	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
-		}
-		name := entry.Name()
-		if !strings.HasSuffix(name, ".go") {
-			continue
-		}
-		if strings.HasSuffix(name, "_test.go") ||
-			strings.HasSuffix(name, "_env_gen.go") ||
-			strings.HasPrefix(name, "generate_") {
-			continue
-		}
-
-		path := filepath.Join(dir, name)
-		file, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
-		if err != nil {
-			return nil, "", fmt.Errorf("parse %s: %w", name, err)
-		}
-		if pkgName == "" {
-			pkgName = file.Name.Name
-		} else if file.Name.Name != pkgName {
-			return nil, "", fmt.Errorf("multiple packages in %s: %s and %s", dir, pkgName, file.Name.Name)
-		}
-		files = append(files, file)
+	cfg := &packages.Config{
+		Mode:  packages.NeedName | packages.NeedSyntax | packages.NeedModule | packages.NeedDeps | packages.NeedFiles | packages.NeedImports,
+		Dir:   absDir,
+		Tests: false,
+	}
+	pkgs, err := packages.Load(cfg, ".")
+	if err != nil {
+		return nil, "", err
+	}
+	if packages.PrintErrors(pkgs) > 0 {
+		return nil, "", fmt.Errorf("package load failed in %s", absDir)
 	}
 
-	if len(files) == 0 {
-		return nil, "", fmt.Errorf("no Go source files in %s", dir)
+	var main *packages.Package
+	for _, p := range pkgs {
+		if filepath.Clean(p.Dir) == filepath.Clean(absDir) && len(p.Syntax) > 0 {
+			main = p
+			break
+		}
+	}
+	if main == nil {
+		return nil, "", fmt.Errorf("no package found in %s", absDir)
 	}
 
-	return files, pkgName, nil
+	deps := make(map[string][]*ast.File)
+	for path, imp := range main.Imports {
+		if imp == nil || len(imp.Syntax) == 0 {
+			continue
+		}
+		deps[path] = imp.Syntax
+	}
+
+	return &tag.Context{
+		Local:    main.Syntax,
+		Resolver: tag.NewResolver(main.Syntax, deps),
+	}, main.Name, nil
 }
 
 func fatal(err error) {

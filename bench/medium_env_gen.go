@@ -7,7 +7,25 @@ import (
 )
 
 func LoadMediumConfig() (MediumConfig, error) {
-	snap := env.Snapshot()
+	var cfg MediumConfig
+	if err := ReloadMediumConfig(&cfg); err != nil {
+		return cfg, err
+	}
+	return cfg, nil
+}
+
+func ReloadMediumConfig(cfg *MediumConfig) error {
+	env.Reload()
+	return loadMediumConfig(cfg, env.Snapshot())
+}
+
+func MustReloadMediumConfig(cfg *MediumConfig) {
+	if err := ReloadMediumConfig(cfg); err != nil {
+		panic(err)
+	}
+}
+
+func LoadMediumConfigFrom(snap *env.EnvSnapshot) (MediumConfig, error) {
 	var cfg MediumConfig
 	if err := loadMediumConfig(&cfg, snap); err != nil {
 		return cfg, err

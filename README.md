@@ -119,6 +119,8 @@ Nested prefixes compose: `prefix:"DB_"` + `env:"HOST"` → `DB_HOST`.
 | Function | Description |
 |----------|-------------|
 | `LoadConfig()` | Parse env into `Config` |
+| `ReloadConfig(cfg *Config)` | Re-parse env in-place (after `SIGHUP`, `LoadDotEnv`, etc.) |
+| `LoadConfigFrom(snap)` | Parse from a custom snapshot |
 | `MustLoadConfig()` | Panics on error |
 | `(Config) Masked()` | Copy with sensitive fields redacted |
 
@@ -184,6 +186,48 @@ Measured on darwin/arm64, Apple M4 Pro. Full tables in [bench/README.md](bench/R
 | `envDefault:"8080"` | `default:"8080"` |
 | `envPrefix:"DB_"` | `prefix:"DB_"` |
 | `env:"HOST,required"` | `env:"HOST" required:"true"` |
+
+---
+
+## Hot reload
+
+```go
+cfg, _ := config.LoadConfig()
+
+os.Setenv("PORT", "9090")
+_ = config.ReloadConfig(&cfg) // refreshes snapshot and updates cfg in-place
+```
+
+---
+
+## Cross-package nested structs
+
+```go
+import "myapp/internal/db"
+
+type Config struct {
+    DB db.Database `prefix:"DB_"` // db.Database from another package
+}
+```
+
+`envgen` resolves imported struct types via `go/packages`.
+
+---
+
+## Reflection fallback (opt-in)
+
+For prototyping or third-party structs without codegen:
+
+```go
+import "github.com/gopherust-io/env/reflectenv"
+
+var cfg Config
+if err := reflectenv.Parse(&cfg); err != nil {
+    log.Fatal(err)
+}
+```
+
+Uses reflection — slower than generated loaders. Prefer `envgen` in production.
 
 ---
 
