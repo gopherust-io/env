@@ -5,6 +5,27 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-06-27
+
+### Added
+
+- **golangci-lint** in CI — `govet` (incl. `fieldalignment`), `staticcheck`, `errcheck`, `modernize`, `prealloc`, `unconvert`, `makezero`, `nilerr`, `errorlint`, `durationcheck`, `misspell`
+- **`make lint`** — local lint with workspace sync
+- **`bench/remote.sh`** — run published benchmarks without cloning (`make bench-remote VERSION=v0.3.0`)
+- **`bench/v0.3.0`** submodule tag for `go get github.com/gopherust-io/env/bench@v0.3.0`
+
+### Changed
+
+- **Struct tags** — `required:"true"`, `sensitive:"true"`, `expand:"true"` (valid Go syntax; bare flags fail `go vet`)
+- **`envgen`** — `parser.ParseFile` per source file instead of deprecated `parser.ParseDir` / `ast.Package`
+- **Struct field alignment** — `FieldError`, `Error`, `tag.Field`, examples (smaller structs; no hot-path regression)
+- **CI** — `golangci-lint` replaces standalone `go vet` job
+
+### Fixed
+
+- Remote benchmark docs — `go test ...@version` is invalid; documented `bench/remote.sh` workflow
+- `bench/v0.1.0` tag — lightweight tag for nested bench module on pkg.go.dev
+
 ## [0.2.0] - 2026-06-27
 
 ### Added
@@ -77,7 +98,7 @@ First public release of **env** — a codegen-first environment variable parser 
 | viper | `AutomaticEnv` + mapstructure |
 
 ```bash
-go test -bench=. -benchmem -count=1 github.com/gopherust-io/env/bench@v0.1.0
+make bench-remote VERSION=v0.1.0
 ```
 
 ### Performance (darwin/arm64, Apple M4 Pro)
@@ -105,7 +126,7 @@ go get github.com/gopherust-io/env@v0.1.0
 | `env.Parse(&cfg)` | `cfg, err := LoadConfig()` |
 | `envDefault:"8080"` | `default:"8080"` |
 | `envPrefix:"DB_"` | `prefix:"DB_"` |
-| `env:"HOST,required"` | `env:"HOST" required` |
+| `env:"HOST,required"` | `env:"HOST" required:"true"` |
 
 ### Known limitations
 
@@ -117,5 +138,6 @@ go get github.com/gopherust-io/env@v0.1.0
 
 - Go 1.26.4+
 
+[0.3.0]: https://github.com/gopherust-io/env/releases/tag/v0.3.0
 [0.2.0]: https://github.com/gopherust-io/env/releases/tag/v0.2.0
 [0.1.0]: https://github.com/gopherust-io/env/releases/tag/v0.1.0

@@ -13,7 +13,7 @@ const sample = `
 package sample
 
 type Database struct {
-	Host string ` + "`env:\"HOST\" required`" + `
+	Host string ` + "`env:\"HOST\" required:\"true\"`" + `
 	Port int    ` + "`env:\"PORT\" default:\"5432\"`" + `
 }
 

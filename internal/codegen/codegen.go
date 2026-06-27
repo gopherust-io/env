@@ -12,8 +12,8 @@ import (
 type Options struct {
 	Package  string
 	TypeName string
-	Fields   []tag.Field
 	Module   string
+	Fields   []tag.Field
 }
 
 func Generate(opts Options) ([]byte, error) {

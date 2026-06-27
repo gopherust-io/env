@@ -33,38 +33,9 @@ func main() {
 	}
 
 	fset := token.NewFileSet()
-	pkgs, err := parser.ParseDir(fset, absDir, func(info os.FileInfo) bool {
-		name := info.Name()
-		return !info.IsDir() &&
-			!strings.HasSuffix(name, "_test.go") &&
-			!strings.HasSuffix(name, "_env_gen.go") &&
-			!strings.HasPrefix(name, "generate_")
-	}, parser.ParseComments)
+	files, sourcePkg, err := loadPackageFiles(fset, absDir)
 	if err != nil {
 		fatal(err)
-	}
-
-	if len(pkgs) != 1 {
-		fatal(fmt.Errorf("expected exactly one package in %s, found %d", absDir, len(pkgs)))
-	}
-
-	var pkg *ast.Package
-	var pkgPath string
-	for name, p := range pkgs {
-		if strings.HasPrefix(name, "_") {
-			continue
-		}
-		pkg = p
-		pkgPath = name
-		break
-	}
-	if pkg == nil {
-		fatal(fmt.Errorf("no non-test package found in %s", absDir))
-	}
-
-	files := make([]*ast.File, 0, len(pkg.Files))
-	for _, f := range pkg.Files {
-		files = append(files, f)
 	}
 
 	st, filePkg, err := tag.FindStruct(files, *typeName)
@@ -102,7 +73,50 @@ func main() {
 		fatal(err)
 	}
 
-	fmt.Printf("envgen: wrote %s for type %s in package %s\n", outPath, *typeName, pkgPath)
+	fmt.Printf("envgen: wrote %s for type %s in package %s\n", outPath, *typeName, sourcePkg)
+}
+
+func loadPackageFiles(fset *token.FileSet, dir string) ([]*ast.File, string, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, "", err
+	}
+
+	var files []*ast.File
+	var pkgName string
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		if !strings.HasSuffix(name, ".go") {
+			continue
+		}
+		if strings.HasSuffix(name, "_test.go") ||
+			strings.HasSuffix(name, "_env_gen.go") ||
+			strings.HasPrefix(name, "generate_") {
+			continue
+		}
+
+		path := filepath.Join(dir, name)
+		file, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
+		if err != nil {
+			return nil, "", fmt.Errorf("parse %s: %w", name, err)
+		}
+		if pkgName == "" {
+			pkgName = file.Name.Name
+		} else if file.Name.Name != pkgName {
+			return nil, "", fmt.Errorf("multiple packages in %s: %s and %s", dir, pkgName, file.Name.Name)
+		}
+		files = append(files, file)
+	}
+
+	if len(files) == 0 {
+		return nil, "", fmt.Errorf("no Go source files in %s", dir)
+	}
+
+	return files, pkgName, nil
 }
 
 func fatal(err error) {

@@ -9,29 +9,29 @@ import (
 )
 
 type Field struct {
-	Name       string
-	GoType     string
-	TypeExpr   ast.Expr
-	EnvKey     string
-	Default    string
-	Required   bool
-	Sensitive  bool
-	Skip       bool
-	Prefix     string
-	Sep        string
-	KvSep      string
-	Layout     string
-	Expand     bool
-	Children   []Field
-	IsNested   bool
-	IsPointer  bool
-	IsSlice    bool
-	IsMap      bool
-	SliceElem  string
-	MapKey     string
-	MapValue   string
-	FieldPath  string
-	Unmarshal  bool
+	TypeExpr  ast.Expr
+	FieldPath string
+	GoType    string
+	EnvKey    string
+	Default   string
+	Name      string
+	SliceElem string
+	MapValue  string
+	Prefix    string
+	Sep       string
+	KvSep     string
+	Layout    string
+	MapKey    string
+	Children  []Field
+	Required  bool
+	IsPointer bool
+	IsSlice   bool
+	IsMap     bool
+	IsNested  bool
+	Expand    bool
+	Skip      bool
+	Sensitive bool
+	Unmarshal bool
 }
 
 func ParseField(f *ast.Field, prefix, pathPrefix string, files []*ast.File) ([]Field, error) {
@@ -125,8 +125,8 @@ func parseNestedType(files []*ast.File, typeExpr ast.Expr, prefix, pathPrefix, p
 		case *ast.StarExpr:
 			expr = t.X
 		case *ast.Ident, *ast.SelectorExpr:
-			st, err := ResolveStructType(files, expr)
-			if err != nil {
+			st, _ := ResolveStructType(files, expr)
+			if st == nil {
 				return nil, nil
 			}
 			var out []Field
@@ -215,8 +215,8 @@ func parseTags(tagLit *ast.BasicLit) parsedTags {
 		switch k {
 		case "env":
 			tags.EnvRaw = v
-			if strings.HasPrefix(v, "prefix:") {
-				tags.Prefix = strings.TrimPrefix(v, "prefix:")
+			if p, ok := strings.CutPrefix(v, "prefix:"); ok {
+				tags.Prefix = p
 			} else {
 				tags.Env = v
 			}
@@ -230,6 +230,12 @@ func parseTags(tagLit *ast.BasicLit) parsedTags {
 			tags.KvSep = v
 		case "layout":
 			tags.Layout = v
+		case "required":
+			tags.Required = v != "false"
+		case "sensitive":
+			tags.Sensitive = v != "false"
+		case "expand":
+			tags.Expand = v != "false"
 		}
 	}
 	return tags
@@ -248,14 +254,13 @@ func splitTag(s string) (key, rest string) {
 		rest = strings.TrimSpace(s[end+1:])
 		return s[:end+1], rest
 	}
-	if i := strings.IndexByte(s, ' '); i >= 0 {
-		return strings.TrimSpace(s[:i]), strings.TrimSpace(s[i+1:])
+	if before, after, ok := strings.Cut(s, " "); ok {
+		return strings.TrimSpace(before), strings.TrimSpace(after)
 	}
 	return strings.TrimSpace(s), ""
 }
 
 func typeInfo(expr ast.Expr) (goType string, typeExpr ast.Expr, isPtr, isSlice, isMap bool, sliceElem, mapKey, mapVal string, err error) {
-	typeExpr = expr
 	goType = typeString(expr)
 
 	switch t := expr.(type) {

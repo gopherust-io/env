@@ -16,7 +16,7 @@ go install github.com/gopherust-io/env/cmd/envgen@v0.2.0
 ### Variable expansion
 
 ```go
-BaseURL string `env:"BASE_URL" default:"${NATS_URL}/api" expand`
+BaseURL string `env:"BASE_URL" default:"${NATS_URL}/api" expand:"true"`
 ```
 
 ### time.Time

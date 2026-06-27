@@ -7,11 +7,11 @@ import (
 
 // FieldError is a single field-level configuration error.
 type FieldError struct {
+	Err    error
 	Field  string
 	EnvKey string
 	Op     string
 	Value  string
-	Err    error
 }
 
 func (e FieldError) Error() string {
@@ -30,10 +30,9 @@ func (e FieldError) Error() string {
 
 // Error collects every field error from one parse pass.
 type Error struct {
+	msg    string
 	Fields []FieldError
-
-	once sync.Once
-	msg  string
+	once   sync.Once
 }
 
 func (e *Error) Error() string {

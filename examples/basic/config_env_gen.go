@@ -32,6 +32,91 @@ func (c Config) Masked() Config {
 func loadConfig(cfg *Config, snap *env.EnvSnapshot) error {
 	var errs []env.FieldError
 	{
+		key := "STARTED"
+		raw, ok := snap.Lookup(key)
+		if !ok || raw == "" {
+		} else {
+			v, err := env.ParseTime(raw, "2006-01-02")
+			if err != nil {
+				env.AppendParse(&errs, "Started", key, raw, err)
+			} else {
+				cfg.Started = v
+			}
+		}
+	}
+	{
+		key := "LABELS"
+		raw, ok := snap.Lookup(key)
+		if !ok || raw == "" {
+		} else {
+			v, err := env.ParseStringMap(raw, ",", ":")
+			if err != nil {
+				env.AppendParse(&errs, "Labels", key, raw, err)
+			} else {
+				cfg.Labels = v
+			}
+		}
+	}
+	{
+		key := "DB_HOST"
+		raw, ok := snap.Lookup(key)
+		if !ok || raw == "" {
+			env.AppendRequired(&errs, "DB.Host", key)
+		} else {
+			cfg.DB.Host = raw
+		}
+	}
+	{
+		key := "DB_PASSWORD"
+		raw, ok := snap.Lookup(key)
+		if !ok || raw == "" {
+		} else {
+			cfg.DB.Password = raw
+		}
+	}
+	{
+		key := "DB_PORT"
+		raw, ok := snap.Lookup(key)
+		if !ok || raw == "" {
+			v, err := env.ParseInt("5432")
+			if err != nil {
+				env.AppendParse(&errs, "DB.Port", key, "5432", err)
+			} else {
+				cfg.DB.Port = v
+			}
+		} else {
+			v, err := env.ParseInt(raw)
+			if err != nil {
+				env.AppendParse(&errs, "DB.Port", key, raw, err)
+			} else {
+				cfg.DB.Port = v
+			}
+		}
+	}
+	{
+		key := "BASE_URL"
+		raw, ok := snap.Lookup(key)
+		if !ok || raw == "" {
+			cfg.BaseURL = env.Expand("${NATS_URL}/api", snap)
+		} else {
+			raw = env.Expand(raw, snap)
+			cfg.BaseURL = raw
+		}
+	}
+	{
+		key := "TAGS"
+		raw, ok := snap.Lookup(key)
+		if !ok || raw == "" {
+		} else {
+			v, err := env.ParseStringSlice(raw, ",")
+			if err != nil {
+				env.AppendParse(&errs, "Tags", key, raw, err)
+			} else {
+				cfg.Tags = v
+			}
+		}
+	}
+	{
 		key := "PORT"
 		raw, ok := snap.Lookup(key)
 		if !ok || raw == "" {
@@ -47,19 +132,6 @@ func loadConfig(cfg *Config, snap *env.EnvSnapshot) error {
 				env.AppendParse(&errs, "Port", key, raw, err)
 			} else {
 				cfg.Port = v
-			}
-		}
-	}
-	{
-		key := "DEBUG"
-		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
-		} else {
-			v, err := env.ParseBool(raw)
-			if err != nil {
-				env.AppendParse(&errs, "Debug", key, raw, err)
-			} else {
-				cfg.Debug = v
 			}
 		}
 	}
@@ -83,88 +155,16 @@ func loadConfig(cfg *Config, snap *env.EnvSnapshot) error {
 		}
 	}
 	{
-		key := "DB_HOST"
+		key := "DEBUG"
 		raw, ok := snap.Lookup(key)
 		if !ok || raw == "" {
-			env.AppendRequired(&errs, "DB.Host", key)
 		} else {
-			cfg.DB.Host = raw
-		}
-	}
-	{
-		key := "DB_PORT"
-		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
-			v, err := env.ParseInt("5432")
+			v, err := env.ParseBool(raw)
 			if err != nil {
-				env.AppendParse(&errs, "DB.Port", key, "5432", err)
+				env.AppendParse(&errs, "Debug", key, raw, err)
 			} else {
-				cfg.DB.Port = v
+				cfg.Debug = v
 			}
-		} else {
-			v, err := env.ParseInt(raw)
-			if err != nil {
-				env.AppendParse(&errs, "DB.Port", key, raw, err)
-			} else {
-				cfg.DB.Port = v
-			}
-		}
-	}
-	{
-		key := "DB_PASSWORD"
-		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
-		} else {
-			cfg.DB.Password = raw
-		}
-	}
-	{
-		key := "TAGS"
-		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
-		} else {
-			v, err := env.ParseStringSlice(raw, ",")
-			if err != nil {
-				env.AppendParse(&errs, "Tags", key, raw, err)
-			} else {
-				cfg.Tags = v
-			}
-		}
-	}
-	{
-		key := "LABELS"
-		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
-		} else {
-			v, err := env.ParseStringMap(raw, ",", ":")
-			if err != nil {
-				env.AppendParse(&errs, "Labels", key, raw, err)
-			} else {
-				cfg.Labels = v
-			}
-		}
-	}
-	{
-		key := "STARTED"
-		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
-		} else {
-			v, err := env.ParseTime(raw, "2006-01-02")
-			if err != nil {
-				env.AppendParse(&errs, "Started", key, raw, err)
-			} else {
-				cfg.Started = v
-			}
-		}
-	}
-	{
-		key := "BASE_URL"
-		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
-			cfg.BaseURL = env.Expand("${NATS_URL}/api", snap)
-		} else {
-			raw = env.Expand(raw, snap)
-			cfg.BaseURL = raw
 		}
 	}
 	return env.NewError(errs)

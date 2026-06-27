@@ -37,20 +37,20 @@ import "time"
 //go:generate envgen -type Config -output config_env_gen.go
 
 type Database struct {
-    Host     string `env:"HOST" required`
+    Host     string `env:"HOST" required:"true"`
+    Password string `env:"PASSWORD" sensitive:"true"`
     Port     int    `env:"PORT" default:"5432"`
-    Password string `env:"PASSWORD" sensitive`
 }
 
 type Config struct {
-    Port    int               `env:"PORT" default:"8080"`
-    Debug   bool              `env:"DEBUG"`
-    Timeout time.Duration     `env:"TIMEOUT" default:"10s"`
     Started time.Time         `env:"STARTED" layout:"2006-01-02"`
-    BaseURL string            `env:"BASE_URL" default:"${NATS_URL}/api" expand`
-    DB      Database          `prefix:"DB_"`
-    Tags    []string          `env:"TAGS" sep:","`
     Labels  map[string]string `env:"LABELS" sep:"," kvsep:":"`
+    DB      Database          `prefix:"DB_"`
+    BaseURL string            `env:"BASE_URL" default:"${NATS_URL}/api" expand:"true"`
+    Tags    []string          `env:"TAGS" sep:","`
+    Port    int               `env:"PORT" default:"8080"`
+    Timeout time.Duration     `env:"TIMEOUT" default:"10s"`
+    Debug   bool              `env:"DEBUG"`
 }
 ```
 
@@ -101,13 +101,13 @@ flowchart LR
 |-----|-------------|
 | `env:"KEY"` | Environment variable name |
 | `default:"..."` | Value when unset |
-| `required` | Error if unset and no default |
+| `required:"true"` | Error if unset and no default |
 | `prefix:"FOO_"` | Prefix for nested struct fields |
 | `sep:","` | Slice separator (default `,`) |
 | `kvsep:":"` | Map key/value separator (default `:`) |
 | `layout:"..."` | `time.Time` parse layout (default RFC3339) |
-| `expand` | Expand `${VAR}` and `$VAR` in values |
-| `sensitive` | Redact in `Masked()` |
+| `expand:"true"` | Expand `${VAR}` and `$VAR` in values |
+| `sensitive:"true"` | Redact in `Masked()` |
 | `env:"-"` | Skip field |
 
 Nested prefixes compose: `prefix:"DB_"` + `env:"HOST"` → `DB_HOST`.
@@ -152,7 +152,7 @@ snap, err := env.SnapshotWithDotEnv(".env")
 With the `expand` tag, defaults and values can reference other variables:
 
 ```go
-BaseURL string `env:"BASE_URL" default:"${NATS_URL}/api" expand`
+BaseURL string `env:"BASE_URL" default:"${NATS_URL}/api" expand:"true"`
 ```
 
 Supports `${VAR}` and `$VAR` syntax.
@@ -163,7 +163,7 @@ Supports `${VAR}` and `$VAR` syntax.
 
 ```bash
 make bench
-go test -bench=. -benchmem -count=1 github.com/gopherust-io/env/bench@latest
+make bench-remote VERSION=v0.3.0
 ```
 
 | Fixture | env | caarlos0/env | Speedup |
@@ -183,7 +183,7 @@ Measured on darwin/arm64, Apple M4 Pro. Full tables in [bench/README.md](bench/R
 | `env.Parse(&cfg)` | `LoadConfig()` |
 | `envDefault:"8080"` | `default:"8080"` |
 | `envPrefix:"DB_"` | `prefix:"DB_"` |
-| `env:"HOST,required"` | `env:"HOST" required` |
+| `env:"HOST,required"` | `env:"HOST" required:"true"` |
 
 ---
 

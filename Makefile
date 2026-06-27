@@ -1,13 +1,20 @@
-.PHONY: bench bench-remote test
+.PHONY: bench bench-remote lint test
 
 bench:
 	@chmod +x bench/run.sh
 	@./bench/run.sh
 
 bench-remote:
-	go test -bench=. -benchmem -count=1 github.com/gopherust-io/env/bench@$(VERSION)
+	@chmod +x bench/remote.sh
+	@VERSION=$(VERSION) COUNT=$(COUNT) ./bench/remote.sh
 
 VERSION ?= latest
+COUNT ?= 1
+
+lint:
+	@cp -n go.work.example go.work 2>/dev/null || true
+	@go work sync 2>/dev/null || true
+	golangci-lint run ./...
 
 test:
 	go test ./...

@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"slices"
 )
 
 const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -159,18 +160,34 @@ func writeFixtures(b *bytes.Buffer) {
 }
 
 func writeConfigStruct(b *bytes.Buffer, name string, fields []field, envTag, defTag string, sensitive bool) {
+	sorted := append([]field(nil), fields...)
+	slices.SortStableFunc(sorted, func(a, b field) int {
+		return fieldAlignRank(a.typ) - fieldAlignRank(b.typ)
+	})
+
 	fmt.Fprintf(b, "type %s struct {\n", name)
-	for _, f := range fields {
+	for _, f := range sorted {
 		tag := fmt.Sprintf("%s:\"%s\"", envTag, f.key)
 		if f.def != "" {
 			tag += fmt.Sprintf(" %s:\"%s\"", defTag, f.def)
 		}
 		if sensitive && f.name == "AdminPassword" {
-			tag += " sensitive"
+			tag += ` sensitive:"true"`
 		}
 		fmt.Fprintf(b, "\t%s %s `%s`\n", f.name, f.typ, tag)
 	}
 	b.WriteString("}\n\n")
+}
+
+func fieldAlignRank(typ string) int {
+	switch typ {
+	case "bool":
+		return 2
+	case "time.Duration":
+		return 1
+	default:
+		return 0
+	}
 }
 
 func writeCompetitors(b *bytes.Buffer) {

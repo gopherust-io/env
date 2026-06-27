@@ -13,7 +13,7 @@ type SmallConfig struct {
 	RequestTimeout time.Duration `env:"XH6IIE4A" default:"10s"`
 	StaticDir string `env:"7P8ERDIA"`
 	AdminUsername string `env:"S74XQGDI" default:"admin"`
-	AdminPassword string `env:"1T6U258X" default:"admin" sensitive`
+	AdminPassword string `env:"1T6U258X" default:"admin" sensitive:"true"`
 	AuthEnabled bool `env:"412E3U10" default:"true"`
 }
 

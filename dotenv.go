@@ -3,6 +3,7 @@ package env
 import (
 	"bufio"
 	"bytes"
+	"maps"
 	"os"
 	"strings"
 )
@@ -68,9 +69,7 @@ func SnapshotWithDotEnv(paths ...string) (*EnvSnapshot, error) {
 		if err != nil {
 			return nil, err
 		}
-		for k, v := range fileVars {
-			vars[k] = v
-		}
+		maps.Copy(vars, fileVars)
 	}
 	for _, kv := range os.Environ() {
 		for i := 0; i < len(kv); i++ {

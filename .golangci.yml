@@ -1,0 +1,44 @@
+version: "2"
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters:
+  default: none
+  enable:
+    - govet
+    - staticcheck
+    - errcheck
+    - unused
+    - ineffassign
+    - modernize
+    - prealloc
+    - unconvert
+    - makezero
+    - nilerr
+    - errorlint
+    - durationcheck
+    - misspell
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+linters-settings:
+  govet:
+    enable-all: true
+    enable:
+      - fieldalignment
+    disable:
+      - shadow
+  staticcheck:
+    checks:
+      - all
+      - -ST1000
+      - -ST1003
+
+issues:
+  exclude-files:
+    - '.*_gen\.go'

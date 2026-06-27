@@ -1,9 +1,20 @@
 # Benchmarks
 
+Local (from a clone):
+
 ```bash
 make bench
-go test -bench=. -benchmem -count=1 github.com/gopherust-io/env/bench@latest
 ```
+
+Published module (no clone). `go test` does not accept `@version`; use:
+
+```bash
+make bench-remote VERSION=v0.3.0
+# or
+VERSION=v0.3.0 ./bench/remote.sh
+```
+
+Requires **Go 1.26.4+**. The bench submodule is tagged as `bench/v0.3.0` (same commit as root `v0.3.0`).
 
 ## Regenerate fixtures
 

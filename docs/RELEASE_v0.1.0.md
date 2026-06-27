@@ -40,7 +40,7 @@ Benchmarks on Apple M4 Pro (darwin/arm64):
 Run benchmarks:
 
 ```bash
-go test -bench=. -benchmem -count=1 github.com/gopherust-io/env/bench@v0.1.0
+make bench-remote VERSION=v0.1.0
 ```
 
 ## Quick start
