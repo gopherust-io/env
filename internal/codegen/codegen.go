@@ -6,6 +6,7 @@ import (
 	"go/format"
 	"strings"
 
+	"github.com/gopherust-io/env"
 	"github.com/gopherust-io/env/internal/tag"
 )
 
@@ -17,7 +18,7 @@ type Options struct {
 }
 
 func Generate(opts Options) ([]byte, error) {
-	if opts.Module == "" {
+	if env.IsEmpty(opts.Module) {
 		opts.Module = "github.com/gopherust-io/env"
 	}
 
@@ -33,7 +34,7 @@ func Generate(opts Options) ([]byte, error) {
 
 	fmt.Fprintf(&b, "func Load%s() (%s, error) {\n", opts.TypeName, opts.TypeName)
 	b.WriteString("\tvar cfg " + opts.TypeName + "\n")
-	fmt.Fprintf(&b, "\tif err := Reload%s(&cfg); err != nil {\n", opts.TypeName)
+	fmt.Fprintf(&b, "\tif err := load%s(&cfg, env.Snapshot()); err != nil {\n", opts.TypeName)
 	b.WriteString("\t\treturn cfg, err\n")
 	b.WriteString("\t}\n")
 	b.WriteString("\treturn cfg, nil\n")
@@ -122,17 +123,17 @@ func emitFieldLoad(b *bytes.Buffer, f tag.Field, target, rootType string) {
 func emitLeafLoad(b *bytes.Buffer, f tag.Field, target, prefix string) {
 	key := prefix + f.EnvKey
 	fieldLabel := f.FieldPath
-	if fieldLabel == "" {
+	if env.IsEmpty(fieldLabel) {
 		fieldLabel = f.Name
 	}
 
 	fmt.Fprintf(b, "\t{\n")
 	fmt.Fprintf(b, "\t\tkey := %q\n", key)
 	b.WriteString("\t\traw, ok := snap.Lookup(key)\n")
-	b.WriteString("\t\tif !ok || raw == \"\" {\n")
-	if f.Required && f.Default == "" {
+	b.WriteString("\t\tif !ok || env.IsEmpty(raw) {\n")
+	if f.Required && env.IsEmpty(f.Default) {
 		fmt.Fprintf(b, "\t\t\tenv.AppendRequired(&errs, %q, key)\n", fieldLabel)
-	} else if f.Default != "" {
+	} else if !env.IsEmpty(f.Default) {
 		emitDefaultAssign(b, f, target)
 	} else if f.IsPointer {
 		fmt.Fprintf(b, "\t\t\t%s.%s = nil\n", target, f.Name)
@@ -183,7 +184,7 @@ func emitDefaultAssign(b *bytes.Buffer, f tag.Field, target string) {
 		b.WriteString("\t\t\t}\n")
 	case f.GoType == "time.Time":
 		layout := f.Layout
-		if layout == "" {
+		if env.IsEmpty(layout) {
 			layout = "2006-01-02T15:04:05Z07:00"
 		}
 		if f.Expand {
@@ -206,7 +207,7 @@ func emitDefaultAssign(b *bytes.Buffer, f tag.Field, target string) {
 		b.WriteString("\t\t\t}\n")
 	case f.IsSlice && f.SliceElem == "string":
 		sep := f.Sep
-		if sep == "" {
+		if env.IsEmpty(sep) {
 			sep = ","
 		}
 		fmt.Fprintf(b, "\t\t\tv, err := env.ParseStringSlice(%q, %q)\n", val, sep)
@@ -217,7 +218,7 @@ func emitDefaultAssign(b *bytes.Buffer, f tag.Field, target string) {
 		b.WriteString("\t\t\t}\n")
 	case f.IsSlice && f.SliceElem == "int":
 		sep := f.Sep
-		if sep == "" {
+		if env.IsEmpty(sep) {
 			sep = ","
 		}
 		fmt.Fprintf(b, "\t\t\tv, err := env.ParseIntSlice(%q, %q)\n", val, sep)
@@ -228,11 +229,11 @@ func emitDefaultAssign(b *bytes.Buffer, f tag.Field, target string) {
 		b.WriteString("\t\t\t}\n")
 	case f.IsMap && f.MapKey == "string" && f.MapValue == "string":
 		sep := f.Sep
-		if sep == "" {
+		if env.IsEmpty(sep) {
 			sep = ","
 		}
 		kvSep := f.KvSep
-		if kvSep == "" {
+		if env.IsEmpty(kvSep) {
 			kvSep = ":"
 		}
 		fmt.Fprintf(b, "\t\t\tv, err := env.ParseStringMap(%q, %q, %q)\n", val, sep, kvSep)
@@ -266,7 +267,7 @@ func emitParseAssign(b *bytes.Buffer, f tag.Field, target, fieldLabel string) {
 		b.WriteString("\t\t\t}\n")
 	case f.GoType == "time.Time":
 		layout := f.Layout
-		if layout == "" {
+		if env.IsEmpty(layout) {
 			layout = "2006-01-02T15:04:05Z07:00"
 		}
 		fmt.Fprintf(b, "\t\t\tv, err := env.ParseTime(raw, %q)\n", layout)
@@ -277,7 +278,7 @@ func emitParseAssign(b *bytes.Buffer, f tag.Field, target, fieldLabel string) {
 		b.WriteString("\t\t\t}\n")
 	case f.IsSlice && f.SliceElem == "string":
 		sep := f.Sep
-		if sep == "" {
+		if env.IsEmpty(sep) {
 			sep = ","
 		}
 		fmt.Fprintf(b, "\t\t\tv, err := env.ParseStringSlice(raw, %q)\n", sep)
@@ -288,7 +289,7 @@ func emitParseAssign(b *bytes.Buffer, f tag.Field, target, fieldLabel string) {
 		b.WriteString("\t\t\t}\n")
 	case f.IsSlice && f.SliceElem == "int":
 		sep := f.Sep
-		if sep == "" {
+		if env.IsEmpty(sep) {
 			sep = ","
 		}
 		fmt.Fprintf(b, "\t\t\tv, err := env.ParseIntSlice(raw, %q)\n", sep)
@@ -299,11 +300,11 @@ func emitParseAssign(b *bytes.Buffer, f tag.Field, target, fieldLabel string) {
 		b.WriteString("\t\t\t}\n")
 	case f.IsMap && f.MapKey == "string" && f.MapValue == "string":
 		sep := f.Sep
-		if sep == "" {
+		if env.IsEmpty(sep) {
 			sep = ","
 		}
 		kvSep := f.KvSep
-		if kvSep == "" {
+		if env.IsEmpty(kvSep) {
 			kvSep = ":"
 		}
 		fmt.Fprintf(b, "\t\t\tv, err := env.ParseStringMap(raw, %q, %q)\n", sep, kvSep)

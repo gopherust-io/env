@@ -8,7 +8,7 @@ import (
 
 func LoadMediumConfig() (MediumConfig, error) {
 	var cfg MediumConfig
-	if err := ReloadMediumConfig(&cfg); err != nil {
+	if err := loadMediumConfig(&cfg, env.Snapshot()); err != nil {
 		return cfg, err
 	}
 	return cfg, nil
@@ -46,7 +46,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "5UQA4UZJ"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F00 = "v00"
 		} else {
 			cfg.F00 = raw
@@ -55,7 +55,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "M3VSZEHM"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F01 = "v01"
 		} else {
 			cfg.F01 = raw
@@ -64,7 +64,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "QCTPXWO2"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F02 = "v02"
 		} else {
 			cfg.F02 = raw
@@ -73,7 +73,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "RFTM9H94"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F03 = "v03"
 		} else {
 			cfg.F03 = raw
@@ -82,7 +82,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "3VRCQ4T8"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F04 = "v04"
 		} else {
 			cfg.F04 = raw
@@ -91,7 +91,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "ICQS17PA"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F05 = "v05"
 		} else {
 			cfg.F05 = raw
@@ -100,7 +100,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "FWAHPDRF"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F06 = "v06"
 		} else {
 			cfg.F06 = raw
@@ -109,7 +109,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "SN3S6MV4"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F07 = "v07"
 		} else {
 			cfg.F07 = raw
@@ -118,7 +118,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "T0WX4PUK"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F08 = "v08"
 		} else {
 			cfg.F08 = raw
@@ -127,7 +127,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "8EMO9GHP"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F09 = "v09"
 		} else {
 			cfg.F09 = raw
@@ -136,7 +136,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "DIQXD99O"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("10")
 			if err != nil {
 				env.AppendParse(&errs, "F10", key, "10", err)
@@ -155,7 +155,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "KWNOVG6U"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("11")
 			if err != nil {
 				env.AppendParse(&errs, "F11", key, "11", err)
@@ -174,7 +174,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "VHVC608Y"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("12")
 			if err != nil {
 				env.AppendParse(&errs, "F12", key, "12", err)
@@ -193,7 +193,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "J74SDTII"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("13")
 			if err != nil {
 				env.AppendParse(&errs, "F13", key, "13", err)
@@ -212,7 +212,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "D2HPZ7NJ"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("14")
 			if err != nil {
 				env.AppendParse(&errs, "F14", key, "14", err)
@@ -231,7 +231,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "B3MYRVHC"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("15")
 			if err != nil {
 				env.AppendParse(&errs, "F15", key, "15", err)
@@ -250,7 +250,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "3JGMG1ZC"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("16")
 			if err != nil {
 				env.AppendParse(&errs, "F16", key, "16", err)
@@ -269,7 +269,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "68CVLYC0"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("17")
 			if err != nil {
 				env.AppendParse(&errs, "F17", key, "17", err)
@@ -288,7 +288,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "TYCUX3PE"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("18")
 			if err != nil {
 				env.AppendParse(&errs, "F18", key, "18", err)
@@ -307,7 +307,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "LJQG9U55"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("19")
 			if err != nil {
 				env.AppendParse(&errs, "F19", key, "19", err)
@@ -326,7 +326,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "QJ44KQ4E"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseBool("true")
 			if err != nil {
 				env.AppendParse(&errs, "F20", key, "true", err)
@@ -345,7 +345,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "TTWJPECD"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseBool("false")
 			if err != nil {
 				env.AppendParse(&errs, "F21", key, "false", err)
@@ -364,7 +364,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "K5BNCQ5M"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseBool("true")
 			if err != nil {
 				env.AppendParse(&errs, "F22", key, "true", err)
@@ -383,7 +383,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "XW3Q09JT"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseBool("false")
 			if err != nil {
 				env.AppendParse(&errs, "F23", key, "false", err)
@@ -402,7 +402,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "UL71GP0K"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseBool("true")
 			if err != nil {
 				env.AppendParse(&errs, "F24", key, "true", err)
@@ -421,7 +421,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "WJOPAIY4"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseBool("false")
 			if err != nil {
 				env.AppendParse(&errs, "F25", key, "false", err)
@@ -440,7 +440,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "IT45FSW8"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseBool("true")
 			if err != nil {
 				env.AppendParse(&errs, "F26", key, "true", err)
@@ -459,7 +459,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "WRCAK1OV"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseBool("false")
 			if err != nil {
 				env.AppendParse(&errs, "F27", key, "false", err)
@@ -478,7 +478,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "ZIHHEE37"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseBool("true")
 			if err != nil {
 				env.AppendParse(&errs, "F28", key, "true", err)
@@ -497,7 +497,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "EX78CZP3"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseBool("false")
 			if err != nil {
 				env.AppendParse(&errs, "F29", key, "false", err)
@@ -516,7 +516,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "W1JRUYPM"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F30 = "v30"
 		} else {
 			cfg.F30 = raw
@@ -525,7 +525,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "5DDRZFOM"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F31 = "v31"
 		} else {
 			cfg.F31 = raw
@@ -534,7 +534,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "TTMIF2SR"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F32 = "v32"
 		} else {
 			cfg.F32 = raw
@@ -543,7 +543,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "4ORSWNDZ"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F33 = "v33"
 		} else {
 			cfg.F33 = raw
@@ -552,7 +552,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "FA93U5F2"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F34 = "v34"
 		} else {
 			cfg.F34 = raw
@@ -561,7 +561,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "ZJ7CRO7N"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F35 = "v35"
 		} else {
 			cfg.F35 = raw
@@ -570,7 +570,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "I9FGHGRC"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F36 = "v36"
 		} else {
 			cfg.F36 = raw
@@ -579,7 +579,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "OPOVAX5O"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F37 = "v37"
 		} else {
 			cfg.F37 = raw
@@ -588,7 +588,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "JCS6YZIO"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F38 = "v38"
 		} else {
 			cfg.F38 = raw
@@ -597,7 +597,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "7JV9FQPV"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F39 = "v39"
 		} else {
 			cfg.F39 = raw
@@ -606,7 +606,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "8QII3BJ0"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F40 = "v40"
 		} else {
 			cfg.F40 = raw
@@ -615,7 +615,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "4640LWBA"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F41 = "v41"
 		} else {
 			cfg.F41 = raw
@@ -624,7 +624,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "QYC29IG9"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F42 = "v42"
 		} else {
 			cfg.F42 = raw
@@ -633,7 +633,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "9AKD9QX3"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F43 = "v43"
 		} else {
 			cfg.F43 = raw
@@ -642,7 +642,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "S6QI769D"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F44 = "v44"
 		} else {
 			cfg.F44 = raw
@@ -651,7 +651,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "TEN4ODEY"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F45 = "v45"
 		} else {
 			cfg.F45 = raw
@@ -660,7 +660,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "9G4K2OTK"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F46 = "v46"
 		} else {
 			cfg.F46 = raw
@@ -669,7 +669,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "QHMOD2GQ"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F47 = "v47"
 		} else {
 			cfg.F47 = raw
@@ -678,7 +678,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "S0FA90HN"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F48 = "v48"
 		} else {
 			cfg.F48 = raw
@@ -687,7 +687,7 @@ func loadMediumConfig(cfg *MediumConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "BJ43J34N"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F49 = "v49"
 		} else {
 			cfg.F49 = raw

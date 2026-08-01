@@ -3,6 +3,8 @@ package env
 import (
 	"os"
 	"sync/atomic"
+
+	"golang.org/x/sync/singleflight"
 )
 
 // EnvSnapshot holds an indexed view of environment variables.
@@ -10,24 +12,36 @@ type EnvSnapshot struct {
 	vars map[string]string
 }
 
-var defaultSnap atomic.Pointer[EnvSnapshot]
+var (
+	defaultSnap atomic.Pointer[EnvSnapshot]
+	snapFlight  singleflight.Group
+)
 
 // Snapshot returns a cached process environment index.
 // The index is built once from os.Environ() until ResetSnapshot is called.
+// Concurrent first callers share a single FromEnviron via singleflight.
 func Snapshot() *EnvSnapshot {
 	if s := defaultSnap.Load(); s != nil {
 		return s
 	}
-	s := FromEnviron(os.Environ())
-	if defaultSnap.CompareAndSwap(nil, s) {
-		return s
-	}
-	return defaultSnap.Load()
+	v, _, _ := snapFlight.Do("snapshot", func() (any, error) {
+		if s := defaultSnap.Load(); s != nil {
+			return s, nil
+		}
+		s := FromEnviron(os.Environ())
+		defaultSnap.Store(s)
+		return s, nil
+	})
+	return v.(*EnvSnapshot)
 }
 
 // ResetSnapshot rebuilds the cached snapshot.
+// Concurrent Reload/ResetSnapshot calls coalesce to one environ rebuild.
 func ResetSnapshot() {
-	defaultSnap.Store(FromEnviron(os.Environ()))
+	_, _, _ = snapFlight.Do("reload", func() (any, error) {
+		defaultSnap.Store(FromEnviron(os.Environ()))
+		return nil, nil
+	})
 }
 
 // Reload refreshes the cached snapshot from os.Environ().

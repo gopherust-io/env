@@ -12,6 +12,7 @@ import (
 
 	"golang.org/x/tools/go/packages"
 
+	"github.com/gopherust-io/env"
 	"github.com/gopherust-io/env/internal/codegen"
 	"github.com/gopherust-io/env/internal/tag"
 )
@@ -47,11 +48,11 @@ func main() {
 		return
 	}
 
-	if *typeName == "" {
+	if env.IsEmpty(*typeName) {
 		names := listStructs(ctx.Local)
 		fmt.Fprintln(os.Stderr, "envgen: -type is required")
 		if len(names) > 0 {
-			fmt.Fprintf(os.Stderr, "envgen: structs in %s: %s\n", sourcePkg, strings.Join(names, ", "))
+			fmt.Fprintf(os.Stderr, "envgen: structs in %s: %s\n", absDir, strings.Join(names, ", "))
 			fmt.Fprintf(os.Stderr, "envgen: example: envgen -dir %s -type %s\n", *dir, names[0])
 		}
 		os.Exit(2)
@@ -68,12 +69,12 @@ func main() {
 	}
 
 	outPkg := filePkg
-	if *pkgName != "" {
+	if !env.IsEmpty(*pkgName) {
 		outPkg = *pkgName
 	}
 
 	outFile := *output
-	if outFile == "" {
+	if env.IsEmpty(outFile) {
 		outFile = toSnake(*typeName) + "_env_gen.go"
 	}
 
@@ -129,8 +130,10 @@ func loadPackageContext(dir string) (*tag.Context, string, error) {
 		return nil, "", err
 	}
 
+	// Avoid NeedDeps (full transitive syntax graph). Load the target package,
+	// then lazily load syntax only for its direct imports.
 	cfg := &packages.Config{
-		Mode:  packages.NeedName | packages.NeedSyntax | packages.NeedModule | packages.NeedDeps | packages.NeedFiles | packages.NeedImports,
+		Mode:  packages.NeedName | packages.NeedSyntax | packages.NeedModule | packages.NeedFiles | packages.NeedImports,
 		Dir:   absDir,
 		Tests: false,
 	}
@@ -154,11 +157,36 @@ func loadPackageContext(dir string) (*tag.Context, string, error) {
 	}
 
 	deps := make(map[string][]*ast.File)
+	missing := make([]string, 0)
 	for path, imp := range main.Imports {
-		if imp == nil || len(imp.Syntax) == 0 {
+		if imp == nil {
 			continue
 		}
-		deps[path] = imp.Syntax
+		if len(imp.Syntax) > 0 {
+			deps[path] = imp.Syntax
+			continue
+		}
+		missing = append(missing, path)
+	}
+	if len(missing) > 0 {
+		depCfg := &packages.Config{
+			Mode:  packages.NeedName | packages.NeedSyntax | packages.NeedFiles,
+			Dir:   absDir,
+			Tests: false,
+		}
+		depPkgs, loadErr := packages.Load(depCfg, missing...)
+		if loadErr != nil {
+			return nil, "", loadErr
+		}
+		if packages.PrintErrors(depPkgs) > 0 {
+			return nil, "", fmt.Errorf("import package load failed for nested types in %s", absDir)
+		}
+		for _, dp := range depPkgs {
+			if len(dp.Syntax) == 0 {
+				continue
+			}
+			deps[dp.PkgPath] = dp.Syntax
+		}
 	}
 
 	return &tag.Context{

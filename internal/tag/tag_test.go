@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"strings"
 	"testing"
 
 	"github.com/gopherust-io/env/internal/tag"
@@ -51,5 +52,37 @@ func TestCollectFields(t *testing.T) {
 	}
 	if db.Children[0].EnvKey != "HOST" || db.Prefix != "DB_" {
 		t.Fatalf("unexpected nested child: %+v", db.Children[0])
+	}
+}
+
+func TestCollectFieldsRejectsCyclicNestedTypes(t *testing.T) {
+	const cyclic = `
+package sample
+
+type A struct {
+	B B
+}
+
+type B struct {
+	A A
+}
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "cyclic.go", cyclic, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	st, _, err := tag.FindStruct([]*ast.File{f}, "A")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = tag.CollectFields(&tag.Context{Local: []*ast.File{f}}, st, "")
+	if err == nil {
+		t.Fatal("expected cyclic nested type error")
+	}
+	if !strings.Contains(err.Error(), "cyclic nested type") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }

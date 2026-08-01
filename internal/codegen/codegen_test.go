@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gopherust-io/env"
 	"github.com/gopherust-io/env/internal/codegen"
 	"github.com/gopherust-io/env/internal/tag"
 )
@@ -20,17 +21,30 @@ func TestGenerateFlatStruct(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	out := string(src)
+	out := env.BytesToString(src)
 	for _, want := range []string{
 		"func LoadConfig() (Config, error)",
 		"func ReloadConfig(cfg *Config) error",
 		"func LoadConfigFrom(snap *env.EnvSnapshot) (Config, error)",
 		"func MustLoadConfig() Config",
+		"loadConfig(&cfg, env.Snapshot())",
 		"env.ParseInt",
 		"env.ParseBool",
 	} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("missing %q in:\n%s", want, out)
 		}
+	}
+	if strings.Count(out, "env.Reload()") != 1 {
+		t.Fatalf("expected env.Reload only in ReloadConfig, got:\n%s", out)
+	}
+	loadIdx := strings.Index(out, "func LoadConfig()")
+	reloadIdx := strings.Index(out, "func ReloadConfig(")
+	if loadIdx < 0 || reloadIdx < 0 || reloadIdx < loadIdx {
+		t.Fatal("unexpected Load/Reload ordering")
+	}
+	loadBody := out[loadIdx:reloadIdx]
+	if strings.Contains(loadBody, "env.Reload()") {
+		t.Fatalf("LoadConfig must not call env.Reload():\n%s", loadBody)
 	}
 }

@@ -5,6 +5,22 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-08-01
+
+### Added
+
+- **`IsEmpty` / `StringToBytes` / `BytesToString`** — zero-copy string helpers for hot paths
+- **Cyclic nested-type detection** in `envgen` (clear error instead of infinite recursion)
+- **`singleflight` snapshot rebuild** — concurrent `Snapshot` / `ResetSnapshot` coalesce
+- **`ARCHITECTURE.md`**, **`CONTRIBUTING.md`**, issue/PR templates
+- **`make align`** — struct padding gate via [goalign](https://github.com/gopherust-io/goalign) `v1.3.0`
+
+### Changed
+
+- Go toolchain **1.26.5**
+- README — architecture link, when-not-to-use guidance, compatibility notes
+- Broader use of `IsEmpty` across parse, expand, dotenv, and codegen
+
 ## [0.4.0] - 2026-06-27
 
 ### Added

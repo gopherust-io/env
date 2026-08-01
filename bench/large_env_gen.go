@@ -8,7 +8,7 @@ import (
 
 func LoadLargeConfig() (LargeConfig, error) {
 	var cfg LargeConfig
-	if err := ReloadLargeConfig(&cfg); err != nil {
+	if err := loadLargeConfig(&cfg, env.Snapshot()); err != nil {
 		return cfg, err
 	}
 	return cfg, nil
@@ -46,7 +46,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "HR5KIKXG"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F000 = "v000"
 		} else {
 			cfg.F000 = raw
@@ -55,7 +55,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "WZKJHG8G"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F001 = "v001"
 		} else {
 			cfg.F001 = raw
@@ -64,7 +64,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "AHTYRV0Y"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F002 = "v002"
 		} else {
 			cfg.F002 = raw
@@ -73,7 +73,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "6SCLBEFO"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F003 = "v003"
 		} else {
 			cfg.F003 = raw
@@ -82,7 +82,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "URFF0MCI"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F004 = "v004"
 		} else {
 			cfg.F004 = raw
@@ -91,7 +91,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "GENYC6L9"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F005 = "v005"
 		} else {
 			cfg.F005 = raw
@@ -100,7 +100,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "1ZXVH4D2"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F006 = "v006"
 		} else {
 			cfg.F006 = raw
@@ -109,7 +109,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "F0WP2HYV"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F007 = "v007"
 		} else {
 			cfg.F007 = raw
@@ -118,7 +118,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "9K0GIMDN"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F008 = "v008"
 		} else {
 			cfg.F008 = raw
@@ -127,7 +127,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "G6BUX337"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F009 = "v009"
 		} else {
 			cfg.F009 = raw
@@ -136,7 +136,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "HY98JXJX"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F010 = "v010"
 		} else {
 			cfg.F010 = raw
@@ -145,7 +145,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "HSTKL7YQ"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F011 = "v011"
 		} else {
 			cfg.F011 = raw
@@ -154,7 +154,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "OIPKHVG1"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F012 = "v012"
 		} else {
 			cfg.F012 = raw
@@ -163,7 +163,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "EZ6OLYYK"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F013 = "v013"
 		} else {
 			cfg.F013 = raw
@@ -172,7 +172,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "U1HJY7CU"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F014 = "v014"
 		} else {
 			cfg.F014 = raw
@@ -181,7 +181,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "NKEM2OB5"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F015 = "v015"
 		} else {
 			cfg.F015 = raw
@@ -190,7 +190,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "SDEX8BIB"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F016 = "v016"
 		} else {
 			cfg.F016 = raw
@@ -199,7 +199,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "038X9EFP"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F017 = "v017"
 		} else {
 			cfg.F017 = raw
@@ -208,7 +208,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "NYJGRF10"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F018 = "v018"
 		} else {
 			cfg.F018 = raw
@@ -217,7 +217,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "41RHT0A9"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F019 = "v019"
 		} else {
 			cfg.F019 = raw
@@ -226,7 +226,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "GJR6LUWP"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F020 = "v020"
 		} else {
 			cfg.F020 = raw
@@ -235,7 +235,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "45Z065M4"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F021 = "v021"
 		} else {
 			cfg.F021 = raw
@@ -244,7 +244,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "0N59TQ31"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F022 = "v022"
 		} else {
 			cfg.F022 = raw
@@ -253,7 +253,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "3P9EB88C"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F023 = "v023"
 		} else {
 			cfg.F023 = raw
@@ -262,7 +262,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "LQI2BOV0"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F024 = "v024"
 		} else {
 			cfg.F024 = raw
@@ -271,7 +271,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "ADBFB5G5"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F025 = "v025"
 		} else {
 			cfg.F025 = raw
@@ -280,7 +280,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "Z7G8MVSB"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F026 = "v026"
 		} else {
 			cfg.F026 = raw
@@ -289,7 +289,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "JEJ7PU37"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F027 = "v027"
 		} else {
 			cfg.F027 = raw
@@ -298,7 +298,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "NJMJ3L5J"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F028 = "v028"
 		} else {
 			cfg.F028 = raw
@@ -307,7 +307,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "5EUPVCVG"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F029 = "v029"
 		} else {
 			cfg.F029 = raw
@@ -316,7 +316,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "GY9EKGVR"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F030 = "v030"
 		} else {
 			cfg.F030 = raw
@@ -325,7 +325,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "KDMU5QCT"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F031 = "v031"
 		} else {
 			cfg.F031 = raw
@@ -334,7 +334,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "77QSCCOO"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F032 = "v032"
 		} else {
 			cfg.F032 = raw
@@ -343,7 +343,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "WI85BCZF"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F033 = "v033"
 		} else {
 			cfg.F033 = raw
@@ -352,7 +352,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "SLPI70VP"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F034 = "v034"
 		} else {
 			cfg.F034 = raw
@@ -361,7 +361,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "ZM06TGUK"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F035 = "v035"
 		} else {
 			cfg.F035 = raw
@@ -370,7 +370,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "F306B161"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F036 = "v036"
 		} else {
 			cfg.F036 = raw
@@ -379,7 +379,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "BB4Q1VEC"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F037 = "v037"
 		} else {
 			cfg.F037 = raw
@@ -388,7 +388,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "TX1TLCN1"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F038 = "v038"
 		} else {
 			cfg.F038 = raw
@@ -397,7 +397,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "Q0ADB6WL"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F039 = "v039"
 		} else {
 			cfg.F039 = raw
@@ -406,7 +406,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "SRXH7DNM"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F040 = "v040"
 		} else {
 			cfg.F040 = raw
@@ -415,7 +415,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "N95JHF72"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F041 = "v041"
 		} else {
 			cfg.F041 = raw
@@ -424,7 +424,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "4AXMH6P5"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F042 = "v042"
 		} else {
 			cfg.F042 = raw
@@ -433,7 +433,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "R5TIMGGS"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F043 = "v043"
 		} else {
 			cfg.F043 = raw
@@ -442,7 +442,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "F9DIB9P4"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F044 = "v044"
 		} else {
 			cfg.F044 = raw
@@ -451,7 +451,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "XDRY34FK"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F045 = "v045"
 		} else {
 			cfg.F045 = raw
@@ -460,7 +460,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "AZ3MABAD"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F046 = "v046"
 		} else {
 			cfg.F046 = raw
@@ -469,7 +469,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "A6VFL7S4"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F047 = "v047"
 		} else {
 			cfg.F047 = raw
@@ -478,7 +478,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "IW6VLJ8V"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F048 = "v048"
 		} else {
 			cfg.F048 = raw
@@ -487,7 +487,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "KC449N7E"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.F049 = "v049"
 		} else {
 			cfg.F049 = raw
@@ -496,7 +496,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "JEXPDD15"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("50")
 			if err != nil {
 				env.AppendParse(&errs, "F050", key, "50", err)
@@ -515,7 +515,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "GAYXY15W"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("51")
 			if err != nil {
 				env.AppendParse(&errs, "F051", key, "51", err)
@@ -534,7 +534,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "80H7Y2RT"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("52")
 			if err != nil {
 				env.AppendParse(&errs, "F052", key, "52", err)
@@ -553,7 +553,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "4MZ6FWHF"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("53")
 			if err != nil {
 				env.AppendParse(&errs, "F053", key, "53", err)
@@ -572,7 +572,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "X6T6OAWI"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("54")
 			if err != nil {
 				env.AppendParse(&errs, "F054", key, "54", err)
@@ -591,7 +591,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "JT0QBLFH"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("55")
 			if err != nil {
 				env.AppendParse(&errs, "F055", key, "55", err)
@@ -610,7 +610,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "CL5I1ADV"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("56")
 			if err != nil {
 				env.AppendParse(&errs, "F056", key, "56", err)
@@ -629,7 +629,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "FJEZFKYM"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("57")
 			if err != nil {
 				env.AppendParse(&errs, "F057", key, "57", err)
@@ -648,7 +648,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "P74LTVTQ"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("58")
 			if err != nil {
 				env.AppendParse(&errs, "F058", key, "58", err)
@@ -667,7 +667,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "NC24CSUM"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("59")
 			if err != nil {
 				env.AppendParse(&errs, "F059", key, "59", err)
@@ -686,7 +686,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "D569QJXY"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("60")
 			if err != nil {
 				env.AppendParse(&errs, "F060", key, "60", err)
@@ -705,7 +705,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "6ZTKJOC8"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("61")
 			if err != nil {
 				env.AppendParse(&errs, "F061", key, "61", err)
@@ -724,7 +724,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "QM9F8YSO"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("62")
 			if err != nil {
 				env.AppendParse(&errs, "F062", key, "62", err)
@@ -743,7 +743,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "4SM5Q5BA"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("63")
 			if err != nil {
 				env.AppendParse(&errs, "F063", key, "63", err)
@@ -762,7 +762,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "16IYRNBP"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("64")
 			if err != nil {
 				env.AppendParse(&errs, "F064", key, "64", err)
@@ -781,7 +781,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "SVODYFY7"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("65")
 			if err != nil {
 				env.AppendParse(&errs, "F065", key, "65", err)
@@ -800,7 +800,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "AGONXXX1"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("66")
 			if err != nil {
 				env.AppendParse(&errs, "F066", key, "66", err)
@@ -819,7 +819,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "IRTBOZQA"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("67")
 			if err != nil {
 				env.AppendParse(&errs, "F067", key, "67", err)
@@ -838,7 +838,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "931T0LKN"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("68")
 			if err != nil {
 				env.AppendParse(&errs, "F068", key, "68", err)
@@ -857,7 +857,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "KWQ94GHW"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("69")
 			if err != nil {
 				env.AppendParse(&errs, "F069", key, "69", err)
@@ -876,7 +876,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "LFNAQ6AC"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("70")
 			if err != nil {
 				env.AppendParse(&errs, "F070", key, "70", err)
@@ -895,7 +895,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "3BTQCQON"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("71")
 			if err != nil {
 				env.AppendParse(&errs, "F071", key, "71", err)
@@ -914,7 +914,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "AK8H8MDH"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("72")
 			if err != nil {
 				env.AppendParse(&errs, "F072", key, "72", err)
@@ -933,7 +933,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "CYCRRCU9"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("73")
 			if err != nil {
 				env.AppendParse(&errs, "F073", key, "73", err)
@@ -952,7 +952,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "9KW7CMUF"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("74")
 			if err != nil {
 				env.AppendParse(&errs, "F074", key, "74", err)
@@ -971,7 +971,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "5PFYA3TF"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("75")
 			if err != nil {
 				env.AppendParse(&errs, "F075", key, "75", err)
@@ -990,7 +990,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "KZ06DKCS"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("76")
 			if err != nil {
 				env.AppendParse(&errs, "F076", key, "76", err)
@@ -1009,7 +1009,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "BHEG512H"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("77")
 			if err != nil {
 				env.AppendParse(&errs, "F077", key, "77", err)
@@ -1028,7 +1028,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "FFXA42E2"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("78")
 			if err != nil {
 				env.AppendParse(&errs, "F078", key, "78", err)
@@ -1047,7 +1047,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "2FP929YF"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("79")
 			if err != nil {
 				env.AppendParse(&errs, "F079", key, "79", err)
@@ -1066,7 +1066,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "IGL9FSKH"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("80")
 			if err != nil {
 				env.AppendParse(&errs, "F080", key, "80", err)
@@ -1085,7 +1085,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "H3BDRDMZ"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("81")
 			if err != nil {
 				env.AppendParse(&errs, "F081", key, "81", err)
@@ -1104,7 +1104,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "U6HUP4CD"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("82")
 			if err != nil {
 				env.AppendParse(&errs, "F082", key, "82", err)
@@ -1123,7 +1123,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "L7RXSYON"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("83")
 			if err != nil {
 				env.AppendParse(&errs, "F083", key, "83", err)
@@ -1142,7 +1142,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "OALM1HRO"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("84")
 			if err != nil {
 				env.AppendParse(&errs, "F084", key, "84", err)
@@ -1161,7 +1161,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "2XU1Q8ED"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("85")
 			if err != nil {
 				env.AppendParse(&errs, "F085", key, "85", err)
@@ -1180,7 +1180,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "17Y6A85Y"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("86")
 			if err != nil {
 				env.AppendParse(&errs, "F086", key, "86", err)
@@ -1199,7 +1199,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "R3DQ44SB"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("87")
 			if err != nil {
 				env.AppendParse(&errs, "F087", key, "87", err)
@@ -1218,7 +1218,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "4CH1SVH0"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("88")
 			if err != nil {
 				env.AppendParse(&errs, "F088", key, "88", err)
@@ -1237,7 +1237,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "OGOCUZCG"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("89")
 			if err != nil {
 				env.AppendParse(&errs, "F089", key, "89", err)
@@ -1256,7 +1256,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "OZV9G4AR"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("90")
 			if err != nil {
 				env.AppendParse(&errs, "F090", key, "90", err)
@@ -1275,7 +1275,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "LKC7EGVW"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("91")
 			if err != nil {
 				env.AppendParse(&errs, "F091", key, "91", err)
@@ -1294,7 +1294,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "PABJMID0"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("92")
 			if err != nil {
 				env.AppendParse(&errs, "F092", key, "92", err)
@@ -1313,7 +1313,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "JLG18IO7"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("93")
 			if err != nil {
 				env.AppendParse(&errs, "F093", key, "93", err)
@@ -1332,7 +1332,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "ANSNFH9S"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("94")
 			if err != nil {
 				env.AppendParse(&errs, "F094", key, "94", err)
@@ -1351,7 +1351,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "636TRKOI"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("95")
 			if err != nil {
 				env.AppendParse(&errs, "F095", key, "95", err)
@@ -1370,7 +1370,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "HNI1FBE3"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("96")
 			if err != nil {
 				env.AppendParse(&errs, "F096", key, "96", err)
@@ -1389,7 +1389,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "Z9IJGIGH"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("97")
 			if err != nil {
 				env.AppendParse(&errs, "F097", key, "97", err)
@@ -1408,7 +1408,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "NX5IU0V4"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("98")
 			if err != nil {
 				env.AppendParse(&errs, "F098", key, "98", err)
@@ -1427,7 +1427,7 @@ func loadLargeConfig(cfg *LargeConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "48Z6BCH9"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("99")
 			if err != nil {
 				env.AppendParse(&errs, "F099", key, "99", err)

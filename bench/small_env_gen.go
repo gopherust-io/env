@@ -8,7 +8,7 @@ import (
 
 func LoadSmallConfig() (SmallConfig, error) {
 	var cfg SmallConfig
-	if err := ReloadSmallConfig(&cfg); err != nil {
+	if err := loadSmallConfig(&cfg, env.Snapshot()); err != nil {
 		return cfg, err
 	}
 	return cfg, nil
@@ -52,7 +52,7 @@ func loadSmallConfig(cfg *SmallConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "R9645Z7I"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.HTTPAddr = ":8080"
 		} else {
 			cfg.HTTPAddr = raw
@@ -61,7 +61,7 @@ func loadSmallConfig(cfg *SmallConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "UHBLDE6J"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.NATSURL = "nats://localhost:4222"
 		} else {
 			cfg.NATSURL = raw
@@ -70,7 +70,7 @@ func loadSmallConfig(cfg *SmallConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "IF9U8G21"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 		} else {
 			cfg.NATSCredsFile = raw
 		}
@@ -78,7 +78,7 @@ func loadSmallConfig(cfg *SmallConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "QROT5LSO"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 		} else {
 			cfg.NATSToken = raw
 		}
@@ -86,7 +86,7 @@ func loadSmallConfig(cfg *SmallConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "5SRWSTAX"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.MonitoringURL = "http://localhost:8222"
 		} else {
 			cfg.MonitoringURL = raw
@@ -95,7 +95,7 @@ func loadSmallConfig(cfg *SmallConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "XH6IIE4A"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseDuration("10s")
 			if err != nil {
 				env.AppendParse(&errs, "RequestTimeout", key, "10s", err)
@@ -114,7 +114,7 @@ func loadSmallConfig(cfg *SmallConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "7P8ERDIA"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 		} else {
 			cfg.StaticDir = raw
 		}
@@ -122,7 +122,7 @@ func loadSmallConfig(cfg *SmallConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "S74XQGDI"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.AdminUsername = "admin"
 		} else {
 			cfg.AdminUsername = raw
@@ -131,7 +131,7 @@ func loadSmallConfig(cfg *SmallConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "1T6U258X"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.AdminPassword = "admin"
 		} else {
 			cfg.AdminPassword = raw
@@ -140,7 +140,7 @@ func loadSmallConfig(cfg *SmallConfig, snap *env.EnvSnapshot) error {
 	{
 		key := "412E3U10"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseBool("true")
 			if err != nil {
 				env.AppendParse(&errs, "AuthEnabled", key, "true", err)

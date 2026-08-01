@@ -39,7 +39,7 @@ func ParseDotEnv(data []byte) (map[string]string, error) {
 	scanner := bufio.NewScanner(bytes.NewReader(data))
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
-		if line == "" || strings.HasPrefix(line, "#") {
+		if IsEmpty(line) || strings.HasPrefix(line, "#") {
 			continue
 		}
 		if i := strings.IndexByte(line, '#'); i >= 0 {
@@ -51,7 +51,7 @@ func ParseDotEnv(data []byte) (map[string]string, error) {
 		}
 		key = strings.TrimSpace(key)
 		val = strings.TrimSpace(val)
-		if key == "" {
+		if IsEmpty(key) {
 			continue
 		}
 		val = strings.Trim(val, `"'`)

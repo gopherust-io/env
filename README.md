@@ -9,12 +9,16 @@
 
 `github.com/gopherust-io/env` parses environment variables into typed structs using compile-time code generation. No reflection at runtime. No external dependencies. One `os.Environ()` pass, then direct field assignment.
 
+Quick links: [Architecture](ARCHITECTURE.md) · [Getting started](docs/GETTING_STARTED.md) · [Examples](examples/basic/) · [Changelog](CHANGELOG.md)
+
 ```text
   caarlos0/env   11,619 ns/op   220 allocs
   viper           3,146 ns/op    70 allocs
   stdlib            150 ns/op     0 allocs
   env                  74 ns/op     0 allocs
 ```
+
+Benchmark note: these numbers come from the project bench suite on identical fixtures and should be treated as directional. Re-run on your hardware for release decisions: `make bench-remote VERSION=<tag>`.
 
 **New here?** → [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) (copy-paste guide, CI, troubleshooting)
 
@@ -62,6 +66,14 @@ log.Printf("%+v", cfg.Masked()) // safe if you use sensitive:"true"
 Optional local `.env`: `_ = env.LoadDotEnv(".env")` before `LoadConfig()`.
 
 Full-featured example: [examples/basic](examples/basic/). Minimal: [examples/minimal](examples/minimal/).
+
+## When not to use `env`
+
+- You need dynamic/untyped runtime schemas from arbitrary keys.
+- Your config changes shape frequently and code generation is not acceptable.
+- You prefer convenience over strict, explicit typed parsing and compile-time setup.
+
+For those cases, reflection-based config loaders can be a better fit.
 
 ---
 
@@ -257,11 +269,19 @@ env.LoadDotEnv(".env")
 env.Reload()
 ```
 
+## Compatibility and stability
+
+- Supported Go version: follow `go.mod` in this repository.
+- Public generated API (`LoadConfig`, `ReloadConfig`, `Masked`) is stable across patch releases.
+- Breaking changes are called out in [CHANGELOG.md](CHANGELOG.md).
+
 ---
 
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md).
+
+[Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 
 ## License
 

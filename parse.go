@@ -83,24 +83,24 @@ func ParseDuration(s string) (time.Duration, error) {
 }
 
 func ParseTime(s, layout string) (time.Time, error) {
-	if layout == "" {
+	if IsEmpty(layout) {
 		layout = time.RFC3339
 	}
 	return time.Parse(layout, s)
 }
 
 func ParseStringSlice(s, sep string) ([]string, error) {
-	if s == "" {
+	if IsEmpty(s) {
 		return nil, nil
 	}
-	if sep == "" {
+	if IsEmpty(sep) {
 		sep = ","
 	}
 	parts := strings.Split(s, sep)
 	out := make([]string, 0, len(parts))
 	for _, p := range parts {
 		p = strings.TrimSpace(p)
-		if p != "" {
+		if !IsEmpty(p) {
 			out = append(out, p)
 		}
 	}
@@ -127,20 +127,20 @@ func ParseIntSlice(s, sep string) ([]int, error) {
 }
 
 func ParseStringMap(s, sep, kvSep string) (map[string]string, error) {
-	if s == "" {
+	if IsEmpty(s) {
 		return nil, nil
 	}
-	if sep == "" {
+	if IsEmpty(sep) {
 		sep = ","
 	}
-	if kvSep == "" {
+	if IsEmpty(kvSep) {
 		kvSep = ":"
 	}
 	parts := strings.Split(s, sep)
 	out := make(map[string]string, len(parts))
 	for _, p := range parts {
 		p = strings.TrimSpace(p)
-		if p == "" {
+		if IsEmpty(p) {
 			continue
 		}
 		kv := strings.SplitN(p, kvSep, 2)
@@ -149,7 +149,7 @@ func ParseStringMap(s, sep, kvSep string) (map[string]string, error) {
 		}
 		key := strings.TrimSpace(kv[0])
 		val := strings.TrimSpace(kv[1])
-		if key == "" {
+		if IsEmpty(key) {
 			return nil, strconv.ErrSyntax
 		}
 		out[key] = val

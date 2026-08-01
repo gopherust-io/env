@@ -6,6 +6,8 @@ import (
 	"go/token"
 	"strconv"
 	"strings"
+
+	"github.com/gopherust-io/env"
 )
 
 type Field struct {
@@ -35,6 +37,10 @@ type Field struct {
 }
 
 func ParseField(f *ast.Field, prefix, pathPrefix string, ctx *Context) ([]Field, error) {
+	return parseField(f, prefix, pathPrefix, ctx, nil)
+}
+
+func parseField(f *ast.Field, prefix, pathPrefix string, ctx *Context, visited map[string]struct{}) ([]Field, error) {
 	if f.Names == nil {
 		return nil, nil
 	}
@@ -48,7 +54,7 @@ func ParseField(f *ast.Field, prefix, pathPrefix string, ctx *Context) ([]Field,
 		}
 
 		fieldPath := name.Name
-		if pathPrefix != "" {
+		if !env.IsEmpty(pathPrefix) {
 			fieldPath = pathPrefix + "." + name.Name
 		}
 
@@ -63,17 +69,17 @@ func ParseField(f *ast.Field, prefix, pathPrefix string, ctx *Context) ([]Field,
 		}
 
 		fieldPrefix := prefix
-		if tags.Prefix != "" {
+		if !env.IsEmpty(tags.Prefix) {
 			fieldPrefix = prefix + tags.Prefix
 		}
 
-		if envKey == "" && strings.HasPrefix(tags.EnvRaw, "prefix:") {
+		if env.IsEmpty(envKey) && strings.HasPrefix(tags.EnvRaw, "prefix:") {
 			fieldPrefix = prefix + strings.TrimPrefix(tags.EnvRaw, "prefix:")
 			envKey = ""
 		}
 
-		if isNested(goType, isPtr, isSlice, isMap) && envKey == "" {
-			nested, err := parseNestedType(ctx, typeExpr, fieldPrefix, fieldPath, name.Name)
+		if isNested(goType, isPtr, isSlice, isMap) && env.IsEmpty(envKey) {
+			nested, err := parseNestedType(ctx, typeExpr, fieldPrefix, fieldPath, name.Name, visited)
 			if err != nil {
 				return nil, err
 			}
@@ -83,7 +89,7 @@ func ParseField(f *ast.Field, prefix, pathPrefix string, ctx *Context) ([]Field,
 			}
 		}
 
-		if envKey == "" {
+		if env.IsEmpty(envKey) {
 			envKey = toSnakeUpper(name.Name)
 		}
 
@@ -118,7 +124,22 @@ func ParseField(f *ast.Field, prefix, pathPrefix string, ctx *Context) ([]Field,
 	return out, nil
 }
 
-func parseNestedType(ctx *Context, typeExpr ast.Expr, prefix, pathPrefix, parentName string) ([]Field, error) {
+func parseNestedType(
+	ctx *Context,
+	typeExpr ast.Expr,
+	prefix, pathPrefix, parentName string,
+	visited map[string]struct{},
+) ([]Field, error) {
+	typeKey := typeString(typeExpr)
+	if visited == nil {
+		visited = make(map[string]struct{})
+	}
+	if _, seen := visited[typeKey]; seen {
+		return nil, fmt.Errorf("field %s: cyclic nested type %s at %s", parentName, typeKey, pathPrefix)
+	}
+	visited[typeKey] = struct{}{}
+	defer delete(visited, typeKey)
+
 	expr := typeExpr
 	for {
 		switch t := expr.(type) {
@@ -134,7 +155,7 @@ func parseNestedType(ctx *Context, typeExpr ast.Expr, prefix, pathPrefix, parent
 			}
 			var out []Field
 			for _, f := range st.Fields.List {
-				nested, err := ParseField(f, prefix, pathPrefix, ctx)
+				nested, err := parseField(f, prefix, pathPrefix, ctx, visited)
 				if err != nil {
 					return nil, err
 				}
@@ -152,7 +173,7 @@ func parseNestedType(ctx *Context, typeExpr ast.Expr, prefix, pathPrefix, parent
 		case *ast.StructType:
 			var out []Field
 			for _, f := range t.Fields.List {
-				nested, err := ParseField(f, prefix, pathPrefix, ctx)
+				nested, err := parseField(f, prefix, pathPrefix, ctx, visited)
 				if err != nil {
 					return nil, err
 				}
@@ -173,6 +194,7 @@ func parseNestedType(ctx *Context, typeExpr ast.Expr, prefix, pathPrefix, parent
 	}
 }
 
+// goalign:ignore // trailing bool padding is unavoidable
 type parsedTags struct {
 	Env       string
 	EnvRaw    string
@@ -196,10 +218,10 @@ func parseTags(tagLit *ast.BasicLit) parsedTags {
 	}
 
 	var tags parsedTags
-	for val != "" {
+	for !env.IsEmpty(val) {
 		key, rest := splitTag(val)
 		val = rest
-		if key == "" {
+		if env.IsEmpty(key) {
 			break
 		}
 		if !strings.Contains(key, ":") {
@@ -245,7 +267,7 @@ func parseTags(tagLit *ast.BasicLit) parsedTags {
 }
 
 func splitTag(s string) (key, rest string) {
-	if s == "" {
+	if env.IsEmpty(s) {
 		return "", ""
 	}
 	if s[0] == '"' {
@@ -323,7 +345,7 @@ func isNested(goType string, isPtr, isSlice, isMap bool) bool {
 
 func hasUnmarshalEnv(files []*ast.File, expr ast.Expr) bool {
 	typeName := baseTypeName(expr)
-	if typeName == "" {
+	if env.IsEmpty(typeName) {
 		return false
 	}
 	for _, f := range files {

@@ -8,7 +8,7 @@ import (
 
 // Expand replaces ${VAR} and $VAR references using values from snap.
 func Expand(s string, snap *EnvSnapshot) string {
-	if s == "" || snap == nil {
+	if IsEmpty(s) || snap == nil {
 		return s
 	}
 	if !strings.Contains(s, "$") {

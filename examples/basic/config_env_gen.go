@@ -8,7 +8,7 @@ import (
 
 func LoadConfig() (Config, error) {
 	var cfg Config
-	if err := ReloadConfig(&cfg); err != nil {
+	if err := loadConfig(&cfg, env.Snapshot()); err != nil {
 		return cfg, err
 	}
 	return cfg, nil
@@ -52,7 +52,7 @@ func loadConfig(cfg *Config, snap *env.EnvSnapshot) error {
 	{
 		key := "STARTED"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 		} else {
 			v, err := env.ParseTime(raw, "2006-01-02")
 			if err != nil {
@@ -65,7 +65,7 @@ func loadConfig(cfg *Config, snap *env.EnvSnapshot) error {
 	{
 		key := "LABELS"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 		} else {
 			v, err := env.ParseStringMap(raw, ",", ":")
 			if err != nil {
@@ -78,7 +78,7 @@ func loadConfig(cfg *Config, snap *env.EnvSnapshot) error {
 	{
 		key := "DB_HOST"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			env.AppendRequired(&errs, "DB.Host", key)
 		} else {
 			cfg.DB.Host = raw
@@ -87,7 +87,7 @@ func loadConfig(cfg *Config, snap *env.EnvSnapshot) error {
 	{
 		key := "DB_PASSWORD"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 		} else {
 			cfg.DB.Password = raw
 		}
@@ -95,7 +95,7 @@ func loadConfig(cfg *Config, snap *env.EnvSnapshot) error {
 	{
 		key := "DB_PORT"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("5432")
 			if err != nil {
 				env.AppendParse(&errs, "DB.Port", key, "5432", err)
@@ -114,7 +114,7 @@ func loadConfig(cfg *Config, snap *env.EnvSnapshot) error {
 	{
 		key := "BASE_URL"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			cfg.BaseURL = env.Expand("${NATS_URL}/api", snap)
 		} else {
 			raw = env.Expand(raw, snap)
@@ -124,7 +124,7 @@ func loadConfig(cfg *Config, snap *env.EnvSnapshot) error {
 	{
 		key := "TAGS"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 		} else {
 			v, err := env.ParseStringSlice(raw, ",")
 			if err != nil {
@@ -137,7 +137,7 @@ func loadConfig(cfg *Config, snap *env.EnvSnapshot) error {
 	{
 		key := "PORT"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("8080")
 			if err != nil {
 				env.AppendParse(&errs, "Port", key, "8080", err)
@@ -156,7 +156,7 @@ func loadConfig(cfg *Config, snap *env.EnvSnapshot) error {
 	{
 		key := "TIMEOUT"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseDuration("10s")
 			if err != nil {
 				env.AppendParse(&errs, "Timeout", key, "10s", err)
@@ -175,7 +175,7 @@ func loadConfig(cfg *Config, snap *env.EnvSnapshot) error {
 	{
 		key := "DEBUG"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 		} else {
 			v, err := env.ParseBool(raw)
 			if err != nil {

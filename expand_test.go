@@ -38,7 +38,7 @@ func TestParseTime(t *testing.T) {
 func TestLoadDotEnv(t *testing.T) {
 	dir := t.TempDir()
 	path := dir + "/.env"
-	if err := os.WriteFile(path, []byte("FOO=bar\n# comment\nBAZ=qux\n"), 0o644); err != nil {
+	if err := os.WriteFile(path, env.StringToBytes("FOO=bar\n# comment\nBAZ=qux\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -60,7 +60,7 @@ func TestLoadDotEnv(t *testing.T) {
 func TestSnapshotWithDotEnv(t *testing.T) {
 	dir := t.TempDir()
 	path := dir + "/.env"
-	if err := os.WriteFile(path, []byte("FOO=file\nBAR=fromfile\n"), 0o644); err != nil {
+	if err := os.WriteFile(path, env.StringToBytes("FOO=file\nBAR=fromfile\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 

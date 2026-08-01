@@ -17,7 +17,7 @@ func TestErrorAggregation(t *testing.T) {
 		t.Fatal("expected error")
 	}
 	msg := err.Error()
-	if msg == "" {
+	if env.IsEmpty(msg) {
 		t.Fatal("empty error message")
 	}
 	if err.Error() != msg {

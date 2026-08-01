@@ -5,6 +5,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"github.com/gopherust-io/env"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -121,7 +122,7 @@ func randomKey(r *rand.Rand) string {
 	for i := range b {
 		b[i] = charset[r.Intn(len(charset))]
 	}
-	return string(b)
+	return env.BytesToString(b)
 }
 
 func main() {
@@ -168,7 +169,7 @@ func writeConfigStruct(b *bytes.Buffer, name string, fields []field, envTag, def
 	fmt.Fprintf(b, "type %s struct {\n", name)
 	for _, f := range sorted {
 		tag := fmt.Sprintf("%s:\"%s\"", envTag, f.key)
-		if f.def != "" {
+		if !env.IsEmpty(f.def) {
 			tag += fmt.Sprintf(" %s:\"%s\"", defTag, f.def)
 		}
 		if sensitive && f.name == "AdminPassword" {
@@ -212,7 +213,7 @@ func writeCarlSmall(b *bytes.Buffer) {
 	b.WriteString("type CarlSmallConfig struct {\n")
 	for _, f := range smallFields {
 		tag := fmt.Sprintf("env:\"%s\"", f.key)
-		if f.def != "" {
+		if !env.IsEmpty(f.def) {
 			tag += fmt.Sprintf(" envDefault:\"%s\"", f.def)
 		}
 		fmt.Fprintf(b, "\t%s %s `%s`\n", f.name, f.typ, tag)
@@ -228,7 +229,7 @@ func writeSmallGoenv(b *bytes.Buffer) {
 	b.WriteString("type GoenvSmallConfig struct {\n")
 	for _, f := range smallFields {
 		tag := fmt.Sprintf("env:\"%s", f.key)
-		if f.def != "" {
+		if !env.IsEmpty(f.def) {
 			tag += ",default:" + f.def
 		}
 		tag += "\""
@@ -255,20 +256,20 @@ func writeCompetitorStructFields(b *bytes.Buffer, name string, fields []field, l
 		switch lib {
 		case "cleanenv":
 			tag := fmt.Sprintf("env:\"%s\"", f.key)
-			if f.def != "" {
+			if !env.IsEmpty(f.def) {
 				tag += fmt.Sprintf(" env-default:\"%s\"", f.def)
 			}
 			fmt.Fprintf(b, "\t%s %s `%s`\n", f.name, f.typ, tag)
 		case "goenv":
 			tag := fmt.Sprintf("env:\"%s", f.key)
-			if f.def != "" {
+			if !env.IsEmpty(f.def) {
 				tag += ",default:" + f.def
 			}
 			tag += "\""
 			fmt.Fprintf(b, "\t%s %s `%s`\n", f.name, f.typ, tag)
 		case "envconfig":
 			tag := fmt.Sprintf("envconfig:\"%s\"", f.key)
-			if f.def != "" {
+			if !env.IsEmpty(f.def) {
 				tag += fmt.Sprintf(" default:\"%s\"", f.def)
 			}
 			fmt.Fprintf(b, "\t%s %s `%s`\n", f.name, f.typ, tag)
@@ -284,17 +285,17 @@ func writeEnvSetup(b *bytes.Buffer) {
 	b.WriteString("package bench\n\nimport \"os\"\n\n")
 	b.WriteString("func setBenchEnv() {\n")
 	for _, f := range smallFields {
-		if f.value != "" {
+		if !env.IsEmpty(f.value) {
 			fmt.Fprintf(b, "\t_ = os.Setenv(%q, %q)\n", f.key, f.value)
 		}
 	}
 	for _, f := range mediumFields {
-		if f.value != "" {
+		if !env.IsEmpty(f.value) {
 			fmt.Fprintf(b, "\t_ = os.Setenv(%q, %q)\n", f.key, f.value)
 		}
 	}
 	for _, f := range largeFields {
-		if f.value != "" {
+		if !env.IsEmpty(f.value) {
 			fmt.Fprintf(b, "\t_ = os.Setenv(%q, %q)\n", f.key, f.value)
 		}
 	}
@@ -315,7 +316,7 @@ func writeStdlibLoader(b *bytes.Buffer, size, typeName string, fields []field) {
 	for _, f := range fields {
 		switch f.typ {
 		case "string":
-			if f.def != "" {
+			if !env.IsEmpty(f.def) {
 				fmt.Fprintf(b, "\t\t%s: lookupString(%q, %q),\n", f.name, f.key, f.def)
 			} else {
 				fmt.Fprintf(b, "\t\t%s: lookupStringEmpty(%q),\n", f.name, f.key)

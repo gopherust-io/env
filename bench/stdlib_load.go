@@ -1,20 +1,21 @@
 package bench
 
 import (
+	"github.com/gopherust-io/env"
 	"os"
 	"strconv"
 	"time"
 )
 
 func lookupString(key, def string) string {
-	if v, ok := os.LookupEnv(key); ok && v != "" {
+	if v, ok := os.LookupEnv(key); ok && !env.IsEmpty(v) {
 		return v
 	}
 	return def
 }
 
 func lookupInt(key string, def int) int {
-	if v, ok := os.LookupEnv(key); ok && v != "" {
+	if v, ok := os.LookupEnv(key); ok && !env.IsEmpty(v) {
 		if n, err := strconv.Atoi(v); err == nil {
 			return n
 		}
@@ -23,7 +24,7 @@ func lookupInt(key string, def int) int {
 }
 
 func lookupBool(key string, def bool) bool {
-	if v, ok := os.LookupEnv(key); ok && v != "" {
+	if v, ok := os.LookupEnv(key); ok && !env.IsEmpty(v) {
 		if b, err := strconv.ParseBool(v); err == nil {
 			return b
 		}
@@ -32,7 +33,7 @@ func lookupBool(key string, def bool) bool {
 }
 
 func lookupDuration(key string, def time.Duration) time.Duration {
-	if v, ok := os.LookupEnv(key); ok && v != "" {
+	if v, ok := os.LookupEnv(key); ok && !env.IsEmpty(v) {
 		if d, err := time.ParseDuration(v); err == nil {
 			return d
 		}

@@ -8,7 +8,7 @@ import (
 
 func LoadConfig() (Config, error) {
 	var cfg Config
-	if err := ReloadConfig(&cfg); err != nil {
+	if err := loadConfig(&cfg, env.Snapshot()); err != nil {
 		return cfg, err
 	}
 	return cfg, nil
@@ -44,9 +44,18 @@ func MustLoadConfig() Config {
 func loadConfig(cfg *Config, snap *env.EnvSnapshot) error {
 	var errs []env.FieldError
 	{
+		key := "HOST"
+		raw, ok := snap.Lookup(key)
+		if !ok || env.IsEmpty(raw) {
+			cfg.Host = "localhost"
+		} else {
+			cfg.Host = raw
+		}
+	}
+	{
 		key := "PORT"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 			v, err := env.ParseInt("8080")
 			if err != nil {
 				env.AppendParse(&errs, "Port", key, "8080", err)
@@ -65,7 +74,7 @@ func loadConfig(cfg *Config, snap *env.EnvSnapshot) error {
 	{
 		key := "DEBUG"
 		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
+		if !ok || env.IsEmpty(raw) {
 		} else {
 			v, err := env.ParseBool(raw)
 			if err != nil {
@@ -73,15 +82,6 @@ func loadConfig(cfg *Config, snap *env.EnvSnapshot) error {
 			} else {
 				cfg.Debug = v
 			}
-		}
-	}
-	{
-		key := "HOST"
-		raw, ok := snap.Lookup(key)
-		if !ok || raw == "" {
-			cfg.Host = "localhost"
-		} else {
-			cfg.Host = raw
 		}
 	}
 	return env.NewError(errs)

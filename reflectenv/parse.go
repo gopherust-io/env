@@ -30,7 +30,7 @@ func parseStruct(v reflect.Value, prefix, pathPrefix string, errs *[]env.FieldEr
 	t := v.Type()
 	for i := 0; i < t.NumField(); i++ {
 		sf := t.Field(i)
-		if sf.PkgPath != "" {
+		if !env.IsEmpty(sf.PkgPath) {
 			continue
 		}
 		tags := readFieldTags(sf)
@@ -39,27 +39,27 @@ func parseStruct(v reflect.Value, prefix, pathPrefix string, errs *[]env.FieldEr
 		}
 
 		fieldPath := sf.Name
-		if pathPrefix != "" {
+		if !env.IsEmpty(pathPrefix) {
 			fieldPath = pathPrefix + "." + sf.Name
 		}
 
 		fieldPrefix := prefix
-		if tags.prefix != "" {
+		if !env.IsEmpty(tags.prefix) {
 			fieldPrefix = prefix + tags.prefix
 		}
-		if tags.env != "" && strings.HasPrefix(tags.env, "prefix:") {
+		if !env.IsEmpty(tags.env) && strings.HasPrefix(tags.env, "prefix:") {
 			fieldPrefix = prefix + strings.TrimPrefix(tags.env, "prefix:")
 			tags.env = ""
 		}
 
 		fv := v.Field(i)
-		if isNestedStruct(fv) && tags.env == "" {
+		if isNestedStruct(fv) && env.IsEmpty(tags.env) {
 			parseStruct(fv, fieldPrefix, fieldPath, errs, snap)
 			continue
 		}
 
 		envKey := tags.env
-		if envKey == "" {
+		if env.IsEmpty(envKey) {
 			envKey = toSnakeUpper(sf.Name)
 		}
 		key := fieldPrefix + envKey
@@ -69,12 +69,12 @@ func parseStruct(v reflect.Value, prefix, pathPrefix string, errs *[]env.FieldEr
 
 func loadField(v reflect.Value, sf reflect.StructField, fieldPath, key string, tags fieldTags, errs *[]env.FieldError, snap *env.EnvSnapshot) {
 	raw, ok := snap.Lookup(key)
-	if !ok || raw == "" {
-		if tags.required && tags.defaultVal == "" {
+	if !ok || env.IsEmpty(raw) {
+		if tags.required && env.IsEmpty(tags.defaultVal) {
 			env.AppendRequired(errs, fieldPath, key)
 			return
 		}
-		if tags.defaultVal != "" {
+		if !env.IsEmpty(tags.defaultVal) {
 			raw = tags.defaultVal
 		} else {
 			return
@@ -106,7 +106,7 @@ func setValue(v reflect.Value, sf reflect.StructField, tags fieldTags, fieldPath
 	}
 	if v.Type() == reflect.TypeFor[time.Time]() {
 		layout := sf.Tag.Get("layout")
-		if layout == "" {
+		if env.IsEmpty(layout) {
 			layout = time.RFC3339
 		}
 		tm, err := env.ParseTime(raw, layout)
@@ -147,7 +147,7 @@ func setValue(v reflect.Value, sf reflect.StructField, tags fieldTags, fieldPath
 	default:
 		if v.Kind() == reflect.Slice && v.Type().Elem().Kind() == reflect.String {
 			sep := tags.sep
-			if sep == "" {
+			if env.IsEmpty(sep) {
 				sep = ","
 			}
 			sl, err := env.ParseStringSlice(raw, sep)
@@ -159,7 +159,7 @@ func setValue(v reflect.Value, sf reflect.StructField, tags fieldTags, fieldPath
 		}
 		if v.Kind() == reflect.Slice && v.Type().Elem().Kind() == reflect.Int {
 			sep := tags.sep
-			if sep == "" {
+			if env.IsEmpty(sep) {
 				sep = ","
 			}
 			sl, err := env.ParseIntSlice(raw, sep)
@@ -171,11 +171,11 @@ func setValue(v reflect.Value, sf reflect.StructField, tags fieldTags, fieldPath
 		}
 		if v.Kind() == reflect.Map && v.Type().Key().Kind() == reflect.String && v.Type().Elem().Kind() == reflect.String {
 			sep := tags.sep
-			if sep == "" {
+			if env.IsEmpty(sep) {
 				sep = ","
 			}
 			kvSep := tags.kvSep
-			if kvSep == "" {
+			if env.IsEmpty(kvSep) {
 				kvSep = ":"
 			}
 			m, err := env.ParseStringMap(raw, sep, kvSep)
@@ -200,6 +200,7 @@ func isNestedStruct(v reflect.Value) bool {
 	return true
 }
 
+// goalign:ignore // trailing bool padding is unavoidable
 type fieldTags struct {
 	prefix     string
 	defaultVal string
@@ -212,25 +213,25 @@ type fieldTags struct {
 
 func readFieldTags(sf reflect.StructField) fieldTags {
 	tags := parseFieldTags(sf.Tag.Get("env"))
-	if p := sf.Tag.Get("prefix"); p != "" {
+	if p := sf.Tag.Get("prefix"); !env.IsEmpty(p) {
 		tags.prefix = p
 	}
 	if !tags.required {
 		if _, ok := sf.Tag.Lookup("required"); ok {
 			v := sf.Tag.Get("required")
-			tags.required = v == "" || v == "true"
+			tags.required = env.IsEmpty(v) || v == "true"
 		}
 	}
 	if !tags.expand {
 		if _, ok := sf.Tag.Lookup("expand"); ok {
 			v := sf.Tag.Get("expand")
-			tags.expand = v == "" || v == "true"
+			tags.expand = env.IsEmpty(v) || v == "true"
 		}
 	}
-	if s := sf.Tag.Get("sep"); s != "" {
+	if s := sf.Tag.Get("sep"); !env.IsEmpty(s) {
 		tags.sep = s
 	}
-	if s := sf.Tag.Get("kvsep"); s != "" {
+	if s := sf.Tag.Get("kvsep"); !env.IsEmpty(s) {
 		tags.kvSep = s
 	}
 	return tags
@@ -238,10 +239,10 @@ func readFieldTags(sf reflect.StructField) fieldTags {
 
 func parseFieldTags(tag string) fieldTags {
 	var out fieldTags
-	for tag != "" {
+	for !env.IsEmpty(tag) {
 		key, rest := splitTag(tag)
 		tag = rest
-		if key == "" {
+		if env.IsEmpty(key) {
 			break
 		}
 		if !strings.Contains(key, ":") {
@@ -272,7 +273,7 @@ func parseFieldTags(tag string) fieldTags {
 }
 
 func splitTag(s string) (key, rest string) {
-	if s == "" {
+	if env.IsEmpty(s) {
 		return "", ""
 	}
 	if s[0] == '"' {
