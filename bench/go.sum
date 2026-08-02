@@ -12,8 +12,8 @@ github.com/go-viper/mapstructure/v2 v2.4.0 h1:EBsztssimR/CONLSZZ04E8qAkxNYq4Qp9L
 github.com/go-viper/mapstructure/v2 v2.4.0/go.mod h1:oJDH3BJKyqBA2TXFhDsKDGDTlndYOZ6rGS0BRZIxGhM=
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
-github.com/gopherust-io/env v0.5.0 h1:q0TV72SyFi14lmYC+jpBKPd3m/eiNSLR/X3ITIE9EVg=
-github.com/gopherust-io/env v0.5.0/go.mod h1:go34h+tdRaYBPPm8ADrqElqpa2iOIZ+FRCPRjpKzNC8=
+github.com/gopherust-io/env v0.6.0 h1:Vu9UxG6o/O+/O8UNTozUyB1iuazEMzrT4ex7jYLdyZU=
+github.com/gopherust-io/env v0.6.0/go.mod h1:wP6guLmu9LYlR2AZq91uHvnRhEEd1e750zWC9p+DVsg=
 github.com/ilyakaznacheev/cleanenv v1.5.0 h1:0VNZXggJE2OYdXE87bfSSwGxeiGt9moSR2lOrsHHvr4=
 github.com/ilyakaznacheev/cleanenv v1.5.0/go.mod h1:a5aDzaJrLCQZsazHol1w8InnDcOX0OColm64SlIi6gk=
 github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
