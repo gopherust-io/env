@@ -17,14 +17,22 @@ This repository runs [OpenSSF Scorecard](https://scorecard.dev/) via GitHub Acti
 
 ## Repo settings (maintainers)
 
-After merging the workflow:
+Configured for Scorecard Branch-Protection / Code-Review:
 
-1. **Actions** — ensure Actions are enabled for the repository
-2. **Code scanning** — enable the default Code Scanning / code security features so SARIF uploads succeed (GitHub → Settings → Code security)
-3. **Branch protection** (recommended for higher scores) — require PR reviews and status checks on `main`
-4. First run — open **Actions → Scorecard → Run workflow**, or push to `main`
+1. **Branch protection on `main`** — require 1 approving review, dismiss stale reviews, require last-push approval, require `test` + `lint`, linear history, no force-push/deletion, enforce for admins
+2. **Ruleset `main`** — targets `refs/heads/main`; blocks deletion / non-FF; required status checks `test` + `lint`
+3. **Code scanning** — Scorecard SARIF + CodeQL default setup
+4. Re-run — **Actions → Scorecard → Run workflow** after settings or dependency changes
 
-Branch-protection checks sometimes need a PAT with `admin:repo_hook` / fine-grained admin read; public repos usually get useful scores with the default `GITHUB_TOKEN`.
+## Alert remediation notes
+
+| Check | How we address it |
+|-------|-------------------|
+| Branch-Protection | Branch protection + ruleset above |
+| Code-Review | Same; merge only via reviewed PRs (collaborator approval). Score improves as recent commits are approved PRs |
+| Vulnerabilities | Keep `bench` / deps on OSV-clean versions (e.g. `golang.org/x/text` ≥ 0.39.0) |
+| Maintained | Scorecard requires repo age **> 90 days** (created 2026-06-27). Keep weekly activity; reassess after ~2026-09-25 |
+| CII-Best-Practices | Register at [bestpractices.dev](https://www.bestpractices.dev/en/projects/new?repo_url=https%3A%2F%2Fgithub.com%2Fgopherust-io%2Fenv) (manual login). Even an in-progress badge improves the score |
 
 ## Related hardening in-repo
 
