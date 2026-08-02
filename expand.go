@@ -33,6 +33,10 @@ func Expand(s string, snap *EnvSnapshot) string {
 			key := s[i+2 : i+2+end]
 			if v, ok := snap.Lookup(key); ok {
 				b.WriteString(v)
+			} else {
+				b.WriteString("${")
+				b.WriteString(key)
+				b.WriteByte('}')
 			}
 			i += 2 + end
 			continue
@@ -54,6 +58,9 @@ func Expand(s string, snap *EnvSnapshot) string {
 		key := s[i+1 : j]
 		if v, ok := snap.Lookup(key); ok {
 			b.WriteString(v)
+		} else {
+			b.WriteByte('$')
+			b.WriteString(key)
 		}
 		i = j - 1
 	}

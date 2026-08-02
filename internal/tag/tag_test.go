@@ -86,3 +86,49 @@ type B struct {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
+
+func TestCollectFieldsRejectsEmbedded(t *testing.T) {
+	const src = `
+package sample
+
+type Inner struct {
+	Host string ` + "`env:\"HOST\"`" + `
+}
+
+type Config struct {
+	Inner
+}
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "embed.go", src, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	st, _, err := tag.FindStruct([]*ast.File{f}, "Config")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = tag.CollectFields(&tag.Context{Local: []*ast.File{f}}, st, "")
+	if err == nil {
+		t.Fatal("expected embedded field error")
+	}
+	if !strings.Contains(err.Error(), "embedded field not supported") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestSchemaFieldsOmitsSensitiveDefault(t *testing.T) {
+	schema := tag.SchemaFields([]tag.Field{
+		{Name: "Password", EnvKey: "PASSWORD", Default: "s3cret", Sensitive: true, FieldPath: "Password"},
+		{Name: "Port", EnvKey: "PORT", Default: "8080", FieldPath: "Port"},
+	})
+	if len(schema) != 2 {
+		t.Fatalf("len=%d", len(schema))
+	}
+	if schema[0].Default != "" || !schema[0].HasDefault || !schema[0].Sensitive {
+		t.Fatalf("sensitive schema entry: %+v", schema[0])
+	}
+	if schema[1].Default != "8080" || !schema[1].HasDefault {
+		t.Fatalf("port schema entry: %+v", schema[1])
+	}
+}

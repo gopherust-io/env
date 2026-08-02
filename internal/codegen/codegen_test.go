@@ -27,6 +27,10 @@ func TestGenerateFlatStruct(t *testing.T) {
 		"func ReloadConfig(cfg *Config) error",
 		"func LoadConfigFrom(snap *env.EnvSnapshot) (Config, error)",
 		"func MustLoadConfig() Config",
+		"func AuditConfig(snap *env.EnvSnapshot) env.AuditReport",
+		"func AuditConfigFromEnviron() env.AuditReport",
+		"configAuditSchema",
+		`Key: "PORT"`,
 		"loadConfig(&cfg, env.Snapshot())",
 		"env.ParseInt",
 		"env.ParseBool",
@@ -37,6 +41,9 @@ func TestGenerateFlatStruct(t *testing.T) {
 	}
 	if strings.Count(out, "env.Reload()") != 1 {
 		t.Fatalf("expected env.Reload only in ReloadConfig, got:\n%s", out)
+	}
+	if !strings.Contains(out, "var next Config") || !strings.Contains(out, "*cfg = next") {
+		t.Fatalf("ReloadConfig must load into a fresh value:\n%s", out)
 	}
 	loadIdx := strings.Index(out, "func LoadConfig()")
 	reloadIdx := strings.Index(out, "func ReloadConfig(")

@@ -1,6 +1,7 @@
 package env
 
 import (
+	"maps"
 	"os"
 	"sync/atomic"
 
@@ -17,6 +18,8 @@ var (
 	snapFlight  singleflight.Group
 )
 
+const snapFlightKey = "env-snapshot"
+
 // Snapshot returns a cached process environment index.
 // The index is built once from os.Environ() until ResetSnapshot is called.
 // Concurrent first callers share a single FromEnviron via singleflight.
@@ -24,24 +27,33 @@ func Snapshot() *EnvSnapshot {
 	if s := defaultSnap.Load(); s != nil {
 		return s
 	}
-	v, _, _ := snapFlight.Do("snapshot", func() (any, error) {
+	v, _, _ := snapFlight.Do(snapFlightKey, func() (any, error) {
 		if s := defaultSnap.Load(); s != nil {
 			return s, nil
 		}
 		s := FromEnviron(os.Environ())
-		defaultSnap.Store(s)
+		// A concurrent ResetSnapshot may have stored a fresher snapshot already.
+		if !defaultSnap.CompareAndSwap(nil, s) {
+			if cur := defaultSnap.Load(); cur != nil {
+				return cur, nil
+			}
+		}
 		return s, nil
 	})
-	return v.(*EnvSnapshot)
+	if s, ok := v.(*EnvSnapshot); ok && s != nil {
+		return s
+	}
+	if s := defaultSnap.Load(); s != nil {
+		return s
+	}
+	return FromEnviron(os.Environ())
 }
 
-// ResetSnapshot rebuilds the cached snapshot.
-// Concurrent Reload/ResetSnapshot calls coalesce to one environ rebuild.
+// ResetSnapshot rebuilds the cached snapshot from the current process environment.
+// It always stores a fresh snapshot and does not share work with Snapshot's first-build
+// flight, so a concurrent first Snapshot cannot overwrite a newer reload.
 func ResetSnapshot() {
-	_, _, _ = snapFlight.Do("reload", func() (any, error) {
-		defaultSnap.Store(FromEnviron(os.Environ()))
-		return nil, nil
-	})
+	defaultSnap.Store(FromEnviron(os.Environ()))
 }
 
 // Reload refreshes the cached snapshot from os.Environ().
@@ -63,8 +75,12 @@ func FromEnviron(environ []string) *EnvSnapshot {
 	return &EnvSnapshot{vars: m}
 }
 
+// FromMap copies vars into a new snapshot. Callers may mutate the input map afterward.
 func FromMap(vars map[string]string) *EnvSnapshot {
-	return &EnvSnapshot{vars: vars}
+	if vars == nil {
+		return &EnvSnapshot{vars: map[string]string{}}
+	}
+	return &EnvSnapshot{vars: maps.Clone(vars)}
 }
 
 func (s *EnvSnapshot) Lookup(key string) (string, bool) {
@@ -80,4 +96,16 @@ func (s *EnvSnapshot) Len() int {
 		return 0
 	}
 	return len(s.vars)
+}
+
+// Range calls fn for each key/value. If fn returns false, iteration stops.
+func (s *EnvSnapshot) Range(fn func(key, value string) bool) {
+	if s == nil || fn == nil {
+		return
+	}
+	for k, v := range s.vars {
+		if !fn(k, v) {
+			return
+		}
+	}
 }

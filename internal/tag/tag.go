@@ -42,7 +42,7 @@ func ParseField(f *ast.Field, prefix, pathPrefix string, ctx *Context) ([]Field,
 
 func parseField(f *ast.Field, prefix, pathPrefix string, ctx *Context, visited map[string]struct{}) ([]Field, error) {
 	if f.Names == nil {
-		return nil, nil
+		return nil, fmt.Errorf("embedded field not supported")
 	}
 
 	tags := parseTags(f.Tag)
@@ -140,10 +140,12 @@ func parseNestedType(
 	visited[typeKey] = struct{}{}
 	defer delete(visited, typeKey)
 
+	isPtr := false
 	expr := typeExpr
 	for {
 		switch t := expr.(type) {
 		case *ast.StarExpr:
+			isPtr = true
 			expr = t.X
 		case *ast.Ident, *ast.SelectorExpr:
 			st, err := ctx.resolveStruct(expr)
@@ -168,6 +170,7 @@ func parseNestedType(
 				Prefix:    prefix,
 				FieldPath: pathPrefix,
 				IsNested:  true,
+				IsPointer: isPtr,
 				Children:  out,
 			}}, nil
 		case *ast.StructType:
@@ -186,6 +189,7 @@ func parseNestedType(
 				Prefix:    prefix,
 				FieldPath: pathPrefix,
 				IsNested:  true,
+				IsPointer: isPtr,
 				Children:  out,
 			}}, nil
 		default:
@@ -369,6 +373,8 @@ func baseTypeName(expr ast.Expr) string {
 		return t.Name
 	case *ast.StarExpr:
 		return baseTypeName(t.X)
+	case *ast.SelectorExpr:
+		return t.Sel.Name
 	default:
 		return ""
 	}
@@ -422,4 +428,38 @@ func CollectFields(ctx *Context, st *ast.StructType, pathPrefix string) ([]Field
 		out = append(out, fields...)
 	}
 	return out, nil
+}
+
+// SchemaFields flattens resolved fields into env audit schema entries.
+func SchemaFields(fields []Field) []env.SchemaField {
+	var out []env.SchemaField
+	var walk func([]Field)
+	walk = func(fs []Field) {
+		for _, f := range fs {
+			if f.IsNested {
+				walk(f.Children)
+				continue
+			}
+			path := f.FieldPath
+			if env.IsEmpty(path) {
+				path = f.Name
+			}
+			hasDefault := !env.IsEmpty(f.Default)
+			def := f.Default
+			if f.Sensitive {
+				def = ""
+			}
+			out = append(out, env.SchemaField{
+				Key:        f.Prefix + f.EnvKey,
+				FieldPath:  path,
+				Default:    def,
+				Prefix:     f.Prefix,
+				Required:   f.Required && !hasDefault,
+				HasDefault: hasDefault,
+				Sensitive:  f.Sensitive,
+			})
+		}
+	}
+	walk(fields)
+	return out
 }

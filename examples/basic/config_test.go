@@ -1,6 +1,7 @@
 package basic_test
 
 import (
+	"os"
 	"testing"
 
 	"github.com/gopherust-io/env"
@@ -44,22 +45,32 @@ func TestLoadConfig(t *testing.T) {
 func TestReloadConfig(t *testing.T) {
 	t.Setenv("PORT", "8080")
 	t.Setenv("DB_HOST", "localhost")
+	t.Setenv("DB_PASSWORD", "s3cret")
+	t.Setenv("DEBUG", "true")
 	env.ResetSnapshot()
 
 	cfg, err := basic.LoadConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.Port != 8080 {
-		t.Fatalf("port = %d", cfg.Port)
+	if cfg.Port != 8080 || cfg.DB.Password != "s3cret" || !cfg.Debug {
+		t.Fatalf("unexpected: %+v", cfg)
 	}
 
 	t.Setenv("PORT", "9090")
+	_ = os.Unsetenv("DB_PASSWORD")
+	_ = os.Unsetenv("DEBUG")
 	if err := basic.ReloadConfig(&cfg); err != nil {
 		t.Fatal(err)
 	}
 	if cfg.Port != 9090 {
 		t.Fatalf("after reload port = %d", cfg.Port)
+	}
+	if cfg.DB.Password != "" {
+		t.Fatalf("password should clear on reload when unset, got %q", cfg.DB.Password)
+	}
+	if cfg.Debug {
+		t.Fatal("debug should clear on reload when unset")
 	}
 }
 
@@ -71,5 +82,35 @@ func TestRequiredField(t *testing.T) {
 	_, err := basic.LoadConfig()
 	if err == nil {
 		t.Fatal("expected required field error")
+	}
+}
+
+func TestAuditConfigDoctor(t *testing.T) {
+	snap := env.FromMap(map[string]string{
+		"DB_HST":       "db.internal",
+		"DB_POOL_SIZE": "16",
+		"DB_PASSWORD":  "secret",
+		"API_TOKEN":    "tok_example_abcdefghijklmnopqrstuvwxyz012345",
+	})
+	rep := basic.AuditConfigWithOptions(snap, env.AuditOptions{
+		Mode:          env.AuditModeProd,
+		StrictUnknown: true,
+	})
+	kinds := map[env.FindingKind]bool{}
+	for _, f := range rep.Findings {
+		kinds[f.Kind] = true
+	}
+	for _, want := range []env.FindingKind{
+		env.FindingTypo,
+		env.FindingOrphan,
+		env.FindingMissingRequired,
+		env.FindingSilentDefault,
+	} {
+		if !kinds[want] {
+			t.Fatalf("missing kind %s in %+v", want, rep.Findings)
+		}
+	}
+	if err := rep.Err(); err == nil {
+		t.Fatal("expected audit errors")
 	}
 }

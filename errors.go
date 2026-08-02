@@ -1,17 +1,21 @@
 package env
 
 import (
+	"errors"
+	"strconv"
 	"strings"
 	"sync"
 )
 
 // FieldError is a single field-level configuration error.
 type FieldError struct {
-	Err    error
-	Field  string
-	EnvKey string
-	Op     string
-	Value  string
+	Err       error
+	Field     string
+	EnvKey    string
+	Op        string
+	Value     string
+	Sensitive bool
+	_         [7]byte
 }
 
 func (e FieldError) Error() string {
@@ -70,12 +74,48 @@ func AppendRequired(errs *[]FieldError, field, key string) {
 	})
 }
 
+// AppendParse records a parse failure. Prefer AppendParseSensitive for sensitive fields.
 func AppendParse(errs *[]FieldError, field, key, value string, parseErr error) {
-	*errs = append(*errs, FieldError{
-		Field:  field,
-		EnvKey: key,
-		Op:     "parse",
-		Value:  value,
-		Err:    parseErr,
-	})
+	appendParse(errs, field, key, value, parseErr, false)
+}
+
+// AppendParseSensitive records a parse failure without retaining or printing the raw value.
+func AppendParseSensitive(errs *[]FieldError, field, key, value string, parseErr error) {
+	appendParse(errs, field, key, value, parseErr, true)
+}
+
+func appendParse(errs *[]FieldError, field, key, value string, parseErr error, sensitive bool) {
+	fe := FieldError{
+		Field:     field,
+		EnvKey:    key,
+		Op:        "parse",
+		Value:     value,
+		Err:       parseErr,
+		Sensitive: sensitive,
+	}
+	if sensitive {
+		fe.Value = SensitiveMask
+		fe.Err = redactParseErr(parseErr, value)
+	}
+	*errs = append(*errs, fe)
+}
+
+func redactParseErr(parseErr error, value string) error {
+	if parseErr == nil {
+		return nil
+	}
+	msg := parseErr.Error()
+	if value == "" {
+		return errors.New(msg)
+	}
+	quoted := strconv.Quote(value)
+	msg = strings.ReplaceAll(msg, quoted, strconv.Quote(SensitiveMask))
+	if strings.Contains(msg, value) {
+		msg = strings.ReplaceAll(msg, value, SensitiveMask)
+	}
+	// Opaque fallback when the value still appears (unusual encodings).
+	if strings.Contains(msg, value) {
+		return errors.New("invalid value")
+	}
+	return errors.New(msg)
 }

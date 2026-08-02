@@ -108,6 +108,26 @@ Install `envgen` before `go generate`:
 - run: go test ./...
 ```
 
+Optional contract check in CI (fails on typos / prod silent defaults):
+
+```yaml
+- run: envgen doctor -dir ./internal/config -type Config -env-file .env.example -mode prod
+```
+
+## Config Doctor
+
+```bash
+envgen doctor -dir ./internal/config -type Config -env-file .env -mode prod
+```
+
+Or at runtime after generate:
+
+```go
+if err := config.AuditConfigFromEnviron().Err(); err != nil {
+    log.Fatal(err)
+}
+```
+
 ## Cheatsheet
 
 | Task | Command / API |
@@ -115,6 +135,7 @@ Install `envgen` before `go generate`:
 | List structs | `envgen -dir . -list` |
 | Generate | `go generate ./...` |
 | Load | `config.LoadConfig()` |
+| Audit contract | `envgen doctor -type Config` / `AuditConfig` |
 | Reload in-place | `config.ReloadConfig(&cfg)` |
 | Safe logging | `cfg.Masked()` |
 | Without codegen | `reflectenv.Parse(&cfg)` |
@@ -128,7 +149,7 @@ Install `envgen` before `go generate`:
 | `envgen: command not found` | `go install .../cmd/envgen@latest` and add `GOPATH/bin` to `PATH` |
 | `go:generate` does nothing | Add `//go:generate` line above struct; run from module root |
 | `go vet` / CI fails on tags | Use `required:"true"`, not `required` |
-| `go test ...@version` for bench | Use `make bench-remote VERSION=v0.4.0` — `go test` has no `@version` |
+| `go test ...@version` for bench | Use `make bench-remote VERSION=v0.6.0` — `go test` has no `@version` |
 | Changes to env not picked up | Call `ReloadConfig(&cfg)` or `env.ResetSnapshot()` in tests |
 | Imported nested type fails | Field must be exported; imported package must be a struct with exported fields |
 
@@ -137,7 +158,7 @@ Install `envgen` before `go generate`:
 | Path | What it shows |
 |------|----------------|
 | [examples/minimal](../examples/minimal/) | Smallest config (3 fields) |
-| [examples/basic](../examples/basic/) | Nested, slices, maps, sensitive, expand, time |
+| [examples/basic](../examples/basic/) | Nested, slices, maps, sensitive, expand, time, Config Doctor |
 | [examples/crosspkg](../examples/crosspkg/) | Nested struct from another package |
 
 ## Migrating from caarlos0/env

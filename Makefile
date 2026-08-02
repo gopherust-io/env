@@ -1,6 +1,6 @@
 .PHONY: align bench bench-remote lint test
 
-GOALIGN_VERSION := v1.3.0
+GOALIGN_VERSION := v1.4.0
 GOALIGN_BIN := $(HOME)/go/bin/goalign
 GOALIGN_FLAGS := analyze -r --arch=amd64 --fail-on-findings --min-waste=1 -e bench/,examples/,bin/ .
 

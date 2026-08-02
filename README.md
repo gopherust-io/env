@@ -1,24 +1,29 @@
 # env
 
 [![CI](https://github.com/gopherust-io/env/actions/workflows/ci.yml/badge.svg)](https://github.com/gopherust-io/env/actions/workflows/ci.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/gopherust-io/env/badge)](https://scorecard.dev/viewer/?uri=github.com/gopherust-io/env)
 [![Go Reference](https://pkg.go.dev/badge/github.com/gopherust-io/env.svg)](https://pkg.go.dev/github.com/gopherust-io/env)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gopherust-io/env)](https://goreportcard.com/report/github.com/gopherust-io/env)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**Blazing-fast, zero-allocation environment configuration for Go.**
+**Blazing-fast, zero-allocation environment configuration for Go.**  
+**Blazing-fast load. Contract-grade audit.**
 
-`github.com/gopherust-io/env` parses environment variables into typed structs using compile-time code generation. No reflection at runtime. No external dependencies. One `os.Environ()` pass, then direct field assignment.
+`github.com/gopherust-io/env` parses environment variables into typed structs using compile-time code generation. No reflection at runtime. No external dependencies. One `os.Environ()` pass, then direct field assignment. **Config Doctor** turns the same struct into an enforceable env contract—typos, orphans, silent defaults, unmarked secrets.
 
-Quick links: [Architecture](ARCHITECTURE.md) · [Getting started](docs/GETTING_STARTED.md) · [Examples](examples/basic/) · [Changelog](CHANGELOG.md)
+Quick links: [Architecture](ARCHITECTURE.md) · [Getting started](docs/GETTING_STARTED.md) · [Examples](examples/basic/) · [Changelog](CHANGELOG.md) · [Scorecard](docs/SCORECARD.md)
 
 ```text
-  caarlos0/env   11,619 ns/op   220 allocs
-  viper           3,146 ns/op    70 allocs
-  stdlib            150 ns/op     0 allocs
-  env                  74 ns/op     0 allocs
+  caarlos0/env   12,622 ns/op   244 allocs
+  goenv           6,023 ns/op     8 allocs
+  viper           3,596 ns/op    70 allocs
+  envconfig       3,068 ns/op    81 allocs
+  cleanenv        2,737 ns/op    57 allocs
+  stdlib            140 ns/op     0 allocs
+  env                74 ns/op     0 allocs
 ```
 
-Benchmark note: these numbers come from the project bench suite on identical fixtures and should be treated as directional. Re-run on your hardware for release decisions: `make bench-remote VERSION=<tag>`.
+Benchmark note: Small (10-field) medians from the project bench suite on identical fixtures; directional. Full matrix → [Performance](#performance). Re-run: `make bench-remote VERSION=v0.6.0`.
 
 **New here?** → [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) (copy-paste guide, CI, troubleshooting)
 
@@ -84,6 +89,7 @@ For those cases, reflection-based config loaders can be a better fit.
 | List struct names | `envgen -list` |
 | Regenerate loaders | `go generate ./...` |
 | Load config | `LoadConfig()` |
+| Audit env contract | `envgen doctor -type Config` / `AuditConfig` |
 | Reload after env change | `ReloadConfig(&cfg)` |
 | Log without secrets | `cfg.Masked()` |
 | Skip codegen (dev only) | `reflectenv.Parse(&cfg)` |
@@ -111,8 +117,48 @@ flowchart LR
 ```
 
 1. Define a struct with `env` tags.
-2. `go generate` runs `envgen` → `LoadConfig`, `ReloadConfig`, `Masked()`.
+2. `go generate` runs `envgen` → `LoadConfig`, `ReloadConfig`, `Masked()`, `AuditConfig`.
 3. `LoadConfig()` indexes the environment once and assigns fields with zero reflection.
+
+---
+
+## Config Doctor
+
+The Config struct is the contract. `envgen doctor` (and generated `AuditConfig`) checks a snapshot against that schema without touching the zero-alloc load path.
+
+```bash
+envgen doctor -type Config -env-file .env -mode prod
+```
+
+```text
+error: DB_HST is not a known key; did you mean DB_HOST?
+warn:  Host (HOST): unset; using default "localhost"
+error: DB.Host (DB_HOST): required but unset
+```
+
+| Finding | Meaning |
+|---------|---------|
+| **Typo** | Unknown key within edit distance of a schema key |
+| **Orphan** | Unknown key under a known nested `prefix` |
+| **Silent default** | Unset field falling back to `default` (error in `-mode prod`) |
+| **Missing required** | Required field unset |
+| **Unmarked secret** | Value looks like a token but field lacks `sensitive:"true"` |
+
+```go
+rep := config.AuditConfigWithOptions(snap, env.AuditOptions{Mode: env.AuditModeProd})
+if err := rep.Err(); err != nil {
+    log.Fatal(err)
+}
+```
+
+Try the planted typos in [examples/basic/.env.doctor](examples/basic/.env.doctor):
+
+```bash
+go run ./cmd/envgen doctor -dir ./examples/basic -type Config \
+  -env-file ./examples/basic/.env.doctor -mode prod -prefix DB_
+```
+
+Flags: `-mode dev|prod`, `-format text|json`, `-strict-unknown`, `-all-unknown`, `-prefix`, `-env-file`.
 
 ---
 
@@ -144,6 +190,9 @@ Nested prefixes compose: `prefix:"DB_"` + `env:"HOST"` → `DB_HOST`.
 | `LoadConfigFrom(snap)` | Parse from a custom snapshot |
 | `MustLoadConfig()` | Panics on error |
 | `(Config) Masked()` | Copy with sensitive fields redacted |
+| `AuditConfig(snap)` | Contract audit (typos, orphans, …) |
+| `AuditConfigFromEnviron()` | Audit against process env |
+| `AuditConfigWithOptions(snap, opts)` | Audit with mode / strict flags |
 
 Errors are collected in one pass:
 
@@ -247,15 +296,45 @@ func (m *Mode) UnmarshalEnv(key, value string) error {
 
 ## Performance
 
+Codegen load is faster and zero-alloc vs reflection loaders on identical fixtures.
+
+| Library | Approach | Benchmark |
+|---------|----------|-----------|
+| **env** (this) | Codegen, no reflection | `*Envgen` |
+| stdlib | Hand-written `LookupEnv` + `strconv` | `*Stdlib` |
+| cleanenv | Reflection | `*Cleanenv` |
+| envconfig | Reflection | `*Envconfig` |
+| viper | `AutomaticEnv` + mapstructure | `*Viper` |
+| goenv | Low-allocation reflection | `*Goenv` |
+| caarlos0/env | Reflection | `*Carl` |
+
+### Small config (10 fields)
+
+| Library | ns/op | allocs/op | vs env |
+|---------|------:|----------:|-------:|
+| **env** | **74** | **0** | 1× |
+| stdlib | 140 | 0 | ~2× |
+| cleanenv | 2,737 | 57 | ~37× |
+| envconfig | 3,068 | 81 | ~42× |
+| viper | 3,596 | 70 | ~49× |
+| goenv | 6,023 | 8 | ~82× |
+| caarlos0/env | 12,622 | 244 | ~172× |
+
+### Scaling (env)
+
+| Fixture | env | allocs |
+|---------|----:|-------:|
+| Small (10) | 74 ns | 0 |
+| Medium (50) | 402 ns | 0 |
+| Large (100) | 977 ns | 0 |
+
+Platform: darwin/arm64 (Apple M4 Pro). Medians of `-count=10` from [`bench/`](bench/). Directional; re-run on your hardware:
+
 ```bash
-make bench-remote VERSION=v0.4.0
+make bench-remote VERSION=v0.6.0
 ```
 
-| Fixture | env | caarlos0/env | Speedup |
-|---------|----:|-------------:|--------:|
-| 10 fields | **74 ns**, 0 allocs | 11,619 ns, 220 allocs | **157×** |
-| 50 fields | **398 ns**, 0 allocs | 18,373 ns, 298 allocs | **46×** |
-| 100 fields | **946 ns**, 0 allocs | 26,236 ns, 410 allocs | **28×** |
+Details and Medium/Large matrices: [bench/README.md](bench/README.md). Sample output: [bench/results.sample.txt](bench/results.sample.txt).
 
 ---
 

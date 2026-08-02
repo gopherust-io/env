@@ -5,6 +5,46 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-08-02
+
+### Added
+
+- **Config Doctor** — typed env contract audit from the same struct schema as codegen
+  - `envgen doctor -type Config [-env-file .env] [-mode dev|prod] [-format text|json]`
+  - Generated `AuditConfig` / `AuditConfigFromEnviron` / `AuditConfigWithOptions`
+  - Findings: typos, orphans (prefix), silent defaults, missing required, unmarked secrets
+  - Runtime helpers: `env.Audit`, `SchemaField`, `AuditReport`, `ClosestKey`, `LooksLikeSecret`
+  - `EnvSnapshot.Range` for key iteration
+- **Demo** — [examples/basic/.env.doctor](examples/basic/.env.doctor) planted misconfigurations
+- **`AppendParseSensitive`** — redact secrets in parse errors (not only `Masked()`)
+- **OpenSSF Scorecard** — [`.github/workflows/scorecard.yml`](.github/workflows/scorecard.yml) (SARIF → Code Scanning, `publish_results` for [scorecard.dev](https://scorecard.dev) badge)
+- **`SECURITY.md`**, Dependabot (Go modules + Actions), SHA-pinned CI/Scorecard actions
+
+### Fixed
+
+- **Security / correctness**
+  - Sensitive parse errors no longer leak raw values (`strconv` or `UnmarshalEnv` messages)
+  - `ReloadConfig` loads into a fresh value so unset keys clear previous fields (including secrets)
+  - Dotenv: quote-aware `#`, matching unquote, `export` + whitespace, 1 MiB size cap, `Setenv` errors surfaced
+  - Snapshot: `ResetSnapshot` cannot be overwritten by a stale first `Snapshot` build; `FromMap` clones
+  - Codegen: deep nested structs, nil pointer nests, `*T` assign, `Masked` pointer clone
+  - `sensitive` limited to `string`/`*string`; sensitive defaults rejected; omitted from audit schema plaintext
+  - `envgen -output` contained under `-dir`; `-module` / package / type validated
+  - `reflectenv`: honor `default:"..."`, align `required`/`expand` with codegen, bare `env:"KEY"`, named slices/maps
+  - Expand leaves unresolved `${MISSING}` / `$MISSING` instead of deleting them
+  - Embedded fields rejected with a clear error (was silently skipped)
+  - Cross-package `UnmarshalEnv` detection via selector types
+
+### Changed
+
+- **goalign** pin `v1.3.0` → `v1.4.0` (`make align`)
+- Generated `Reload*` replaces the whole config value (clears unset optionals)
+
+### Notes
+
+- `Load*` happy path is unchanged (zero-alloc); audit may allocate and is opt-in at call sites / CI
+- Empty env values are still treated as unset (`!ok || IsEmpty`) — intentional
+
 ## [0.5.0] - 2026-08-01
 
 ### Added

@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 
+	"golang.org/x/mod/module"
 	"golang.org/x/tools/go/packages"
 
 	"github.com/gopherust-io/env"
@@ -18,11 +19,15 @@ import (
 )
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "doctor" {
+		os.Exit(runDoctor(os.Args[2:]))
+	}
+
 	dir := flag.String("dir", ".", "package directory")
 	typeName := flag.String("type", "", "struct type name to generate loader for")
 	output := flag.String("output", "", "output file (default: <snake>_env_gen.go)")
 	pkgName := flag.String("package", "", "package name override")
-	module := flag.String("module", "github.com/gopherust-io/env", "env module import path")
+	modulePath := flag.String("module", "github.com/gopherust-io/env", "env module import path")
 	list := flag.Bool("list", false, "list struct types in the package and exit")
 	flag.Parse()
 
@@ -72,23 +77,36 @@ func main() {
 	if !env.IsEmpty(*pkgName) {
 		outPkg = *pkgName
 	}
+	if !token.IsIdentifier(outPkg) {
+		fatal(fmt.Errorf("invalid package name %q", outPkg))
+	}
+	if !token.IsIdentifier(*typeName) {
+		fatal(fmt.Errorf("invalid type name %q", *typeName))
+	}
+	if err := module.CheckImportPath(*modulePath); err != nil {
+		fatal(fmt.Errorf("invalid -module %q: %w", *modulePath, err))
+	}
 
 	outFile := *output
 	if env.IsEmpty(outFile) {
 		outFile = toSnake(*typeName) + "_env_gen.go"
 	}
 
+	outPath, err := resolveOutputPath(absDir, outFile)
+	if err != nil {
+		fatal(err)
+	}
+
 	src, err := codegen.Generate(codegen.Options{
 		Package:  outPkg,
 		TypeName: *typeName,
 		Fields:   fields,
-		Module:   *module,
+		Module:   *modulePath,
 	})
 	if err != nil {
 		fatal(err)
 	}
 
-	outPath := filepath.Join(absDir, outFile)
 	if err := os.WriteFile(outPath, src, 0o644); err != nil {
 		fatal(err)
 	}
@@ -193,6 +211,21 @@ func loadPackageContext(dir string) (*tag.Context, string, error) {
 		Local:    main.Syntax,
 		Resolver: tag.NewResolver(main.Syntax, deps),
 	}, main.Name, nil
+}
+
+func resolveOutputPath(absDir, outFile string) (string, error) {
+	if filepath.IsAbs(outFile) {
+		return "", fmt.Errorf("-output must be relative to -dir, got absolute path %q", outFile)
+	}
+	outPath := filepath.Clean(filepath.Join(absDir, outFile))
+	rel, err := filepath.Rel(absDir, outPath)
+	if err != nil {
+		return "", fmt.Errorf("-output %q escapes -dir: %w", outFile, err)
+	}
+	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return "", fmt.Errorf("-output %q escapes -dir %q", outFile, absDir)
+	}
+	return outPath, nil
 }
 
 func fatal(err error) {

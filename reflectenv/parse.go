@@ -53,9 +53,21 @@ func parseStruct(v reflect.Value, prefix, pathPrefix string, errs *[]env.FieldEr
 		}
 
 		fv := v.Field(i)
-		if isNestedStruct(fv) && env.IsEmpty(tags.env) {
-			parseStruct(fv, fieldPrefix, fieldPath, errs, snap)
-			continue
+		if env.IsEmpty(tags.env) {
+			if fv.Kind() == reflect.Pointer && !fv.IsNil() && isNestedStruct(fv.Elem()) {
+				parseStruct(fv.Elem(), fieldPrefix, fieldPath, errs, snap)
+				continue
+			}
+			if fv.Kind() == reflect.Pointer && fv.IsNil() && fv.Type().Elem().Kind() == reflect.Struct &&
+				fv.Type().Elem() != reflect.TypeFor[time.Time]() {
+				fv.Set(reflect.New(fv.Type().Elem()))
+				parseStruct(fv.Elem(), fieldPrefix, fieldPath, errs, snap)
+				continue
+			}
+			if isNestedStruct(fv) {
+				parseStruct(fv, fieldPrefix, fieldPath, errs, snap)
+				continue
+			}
 		}
 
 		envKey := tags.env
@@ -68,6 +80,21 @@ func parseStruct(v reflect.Value, prefix, pathPrefix string, errs *[]env.FieldEr
 }
 
 func loadField(v reflect.Value, sf reflect.StructField, fieldPath, key string, tags fieldTags, errs *[]env.FieldError, snap *env.EnvSnapshot) {
+	if tags.sensitive {
+		t := v.Type()
+		for t.Kind() == reflect.Pointer {
+			t = t.Elem()
+		}
+		if t.Kind() != reflect.String {
+			env.AppendParse(errs, fieldPath, key, "", fmt.Errorf("sensitive field must be string or *string, got %s", v.Type()))
+			return
+		}
+		if !env.IsEmpty(tags.defaultVal) {
+			env.AppendParse(errs, fieldPath, key, "", fmt.Errorf("sensitive field cannot have a default value"))
+			return
+		}
+	}
+
 	raw, ok := snap.Lookup(key)
 	if !ok || env.IsEmpty(raw) {
 		if tags.required && env.IsEmpty(tags.defaultVal) {
@@ -77,6 +104,10 @@ func loadField(v reflect.Value, sf reflect.StructField, fieldPath, key string, t
 		if !env.IsEmpty(tags.defaultVal) {
 			raw = tags.defaultVal
 		} else {
+			// Clear stale value on re-parse (mirrors ReloadConfig fresh-load semantics).
+			if v.CanSet() {
+				v.Set(reflect.Zero(v.Type()))
+			}
 			return
 		}
 	}
@@ -84,12 +115,24 @@ func loadField(v reflect.Value, sf reflect.StructField, fieldPath, key string, t
 		raw = env.Expand(raw, snap)
 	}
 
-	if err := setValue(v, sf, tags, fieldPath, key, raw); err != nil {
-		env.AppendParse(errs, fieldPath, key, raw, err)
+	err := setValue(v, sf, tags, fieldPath, key, raw)
+	if err != nil {
+		if tags.sensitive {
+			env.AppendParseSensitive(errs, fieldPath, key, raw, err)
+		} else {
+			env.AppendParse(errs, fieldPath, key, raw, err)
+		}
 	}
 }
 
 func setValue(v reflect.Value, sf reflect.StructField, tags fieldTags, fieldPath, key, raw string) error {
+	if v.Kind() == reflect.Pointer {
+		if v.IsNil() {
+			v.Set(reflect.New(v.Type().Elem()))
+		}
+		return setValue(v.Elem(), sf, tags, fieldPath, key, raw)
+	}
+
 	if v.CanAddr() {
 		if u, ok := v.Addr().Interface().(env.Unmarshaler); ok {
 			return u.UnmarshalEnv(key, raw)
@@ -154,8 +197,7 @@ func setValue(v reflect.Value, sf reflect.StructField, tags fieldTags, fieldPath
 			if err != nil {
 				return err
 			}
-			v.Set(reflect.ValueOf(sl))
-			return nil
+			return setSliceFromStrings(v, sl)
 		}
 		if v.Kind() == reflect.Slice && v.Type().Elem().Kind() == reflect.Int {
 			sep := tags.sep
@@ -166,8 +208,7 @@ func setValue(v reflect.Value, sf reflect.StructField, tags fieldTags, fieldPath
 			if err != nil {
 				return err
 			}
-			v.Set(reflect.ValueOf(sl))
-			return nil
+			return setSliceFromInts(v, sl)
 		}
 		if v.Kind() == reflect.Map && v.Type().Key().Kind() == reflect.String && v.Type().Elem().Kind() == reflect.String {
 			sep := tags.sep
@@ -182,11 +223,69 @@ func setValue(v reflect.Value, sf reflect.StructField, tags fieldTags, fieldPath
 			if err != nil {
 				return err
 			}
-			v.Set(reflect.ValueOf(m))
-			return nil
+			return setStringMap(v, m)
 		}
 		return fmt.Errorf("unsupported type %s", v.Type())
 	}
+	return nil
+}
+
+func setSliceFromStrings(v reflect.Value, sl []string) error {
+	src := reflect.ValueOf(sl)
+	if src.Type().AssignableTo(v.Type()) {
+		v.Set(src)
+		return nil
+	}
+	out := reflect.MakeSlice(v.Type(), len(sl), len(sl))
+	elemType := v.Type().Elem()
+	for i, s := range sl {
+		ev := reflect.ValueOf(s)
+		if !ev.Type().ConvertibleTo(elemType) {
+			return fmt.Errorf("cannot convert string to %s", elemType)
+		}
+		out.Index(i).Set(ev.Convert(elemType))
+	}
+	v.Set(out)
+	return nil
+}
+
+func setSliceFromInts(v reflect.Value, sl []int) error {
+	src := reflect.ValueOf(sl)
+	if src.Type().AssignableTo(v.Type()) {
+		v.Set(src)
+		return nil
+	}
+	out := reflect.MakeSlice(v.Type(), len(sl), len(sl))
+	elemType := v.Type().Elem()
+	for i, n := range sl {
+		ev := reflect.ValueOf(n)
+		if !ev.Type().ConvertibleTo(elemType) {
+			return fmt.Errorf("cannot convert int to %s", elemType)
+		}
+		out.Index(i).Set(ev.Convert(elemType))
+	}
+	v.Set(out)
+	return nil
+}
+
+func setStringMap(v reflect.Value, m map[string]string) error {
+	src := reflect.ValueOf(m)
+	if src.Type().AssignableTo(v.Type()) {
+		v.Set(src)
+		return nil
+	}
+	out := reflect.MakeMapWithSize(v.Type(), len(m))
+	keyType := v.Type().Key()
+	elemType := v.Type().Elem()
+	for k, val := range m {
+		kv := reflect.ValueOf(k)
+		ev := reflect.ValueOf(val)
+		if !kv.Type().ConvertibleTo(keyType) || !ev.Type().ConvertibleTo(elemType) {
+			return fmt.Errorf("cannot convert map entry to %s", v.Type())
+		}
+		out.SetMapIndex(kv.Convert(keyType), ev.Convert(elemType))
+	}
+	v.Set(out)
 	return nil
 }
 
@@ -209,6 +308,7 @@ type fieldTags struct {
 	kvSep      string
 	required   bool
 	expand     bool
+	sensitive  bool
 }
 
 func readFieldTags(sf reflect.StructField) fieldTags {
@@ -216,16 +316,22 @@ func readFieldTags(sf reflect.StructField) fieldTags {
 	if p := sf.Tag.Get("prefix"); !env.IsEmpty(p) {
 		tags.prefix = p
 	}
+	if d := sf.Tag.Get("default"); !env.IsEmpty(d) {
+		tags.defaultVal = d
+	}
 	if !tags.required {
 		if _, ok := sf.Tag.Lookup("required"); ok {
-			v := sf.Tag.Get("required")
-			tags.required = env.IsEmpty(v) || v == "true"
+			tags.required = tagBool(sf.Tag.Get("required"))
 		}
 	}
 	if !tags.expand {
 		if _, ok := sf.Tag.Lookup("expand"); ok {
-			v := sf.Tag.Get("expand")
-			tags.expand = env.IsEmpty(v) || v == "true"
+			tags.expand = tagBool(sf.Tag.Get("expand"))
+		}
+	}
+	if !tags.sensitive {
+		if _, ok := sf.Tag.Lookup("sensitive"); ok {
+			tags.sensitive = tagBool(sf.Tag.Get("sensitive"))
 		}
 	}
 	if s := sf.Tag.Get("sep"); !env.IsEmpty(s) {
@@ -235,6 +341,11 @@ func readFieldTags(sf reflect.StructField) fieldTags {
 		tags.kvSep = s
 	}
 	return tags
+}
+
+// tagBool matches internal/tag semantics: present and not "false".
+func tagBool(v string) bool {
+	return v != "false"
 }
 
 func parseFieldTags(tag string) fieldTags {
@@ -251,6 +362,13 @@ func parseFieldTags(tag string) fieldTags {
 				out.required = true
 			case "expand":
 				out.expand = true
+			case "sensitive":
+				out.sensitive = true
+			default:
+				// `env:"PORT"` — bare token is the env key.
+				if env.IsEmpty(out.env) {
+					out.env = key
+				}
 			}
 			continue
 		}
@@ -264,9 +382,11 @@ func parseFieldTags(tag string) fieldTags {
 		case "prefix":
 			out.prefix = v
 		case "required":
-			out.required = v != "false"
+			out.required = tagBool(v)
 		case "expand":
-			out.expand = v != "false"
+			out.expand = tagBool(v)
+		case "sensitive":
+			out.sensitive = tagBool(v)
 		}
 	}
 	return out

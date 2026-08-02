@@ -4,7 +4,7 @@ Zero-allocation, codegen-first environment → typed struct loader for Go.
 
 ## Overview
 
-`github.com/gopherust-io/env` parses process environment (and optional `.env`) into typed structs. Compile-time `envgen` emits `LoadConfig` / `ReloadConfig` / `Masked()`; runtime does one `os.Environ()` index then direct field assignment—no reflection on the hot path. Used by **tel** and other gopherust-io services for config.
+`github.com/gopherust-io/env` parses process environment (and optional `.env`) into typed structs. Compile-time `envgen` emits `LoadConfig` / `ReloadConfig` / `Masked()` / `AuditConfig`; runtime does one `os.Environ()` index then direct field assignment—no reflection on the hot path. **Config Doctor** (`envgen doctor` / `Audit*`) audits a snapshot against the same schema. Used by **tel** and other gopherust-io services for config.
 
 Ecosystem: [gopherust-io](https://github.com/gopherust-io/gopherust-io/blob/main/ARCHITECTURE.md)
 
@@ -13,7 +13,7 @@ Ecosystem: [gopherust-io](https://github.com/gopherust-io/gopherust-io/blob/main
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  Application code                                           │
-│  calls generated LoadConfig / ReloadConfig / Masked         │
+│  calls generated LoadConfig / ReloadConfig / Masked / Audit │
 └──────────────────────────┬──────────────────────────────────┘
                            │
 ┌──────────────────────────▼──────────────────────────────────┐
@@ -36,13 +36,13 @@ Optional: reflectenv (reflection fallback for prototypes)
 
 | Path | Responsibility |
 |------|----------------|
-| `env` (root) | `EnvSnapshot`, `Parse*`, dotenv, expand, errors, unsafe bytesconv |
-| `cmd/envgen` | CLI: load package AST, emit loaders (`-type`, `-list`, `-output`) |
+| `env` (root) | `EnvSnapshot`, `Parse*`, dotenv, expand, errors, audit, unsafe bytesconv |
+| `cmd/envgen` | CLI: load package AST, emit loaders (`-type`, `-list`, `-output`); `doctor` subcommand |
 | `internal/tag` | Struct-tag parsing, field resolution, nested prefixes |
 | `internal/codegen` | Emits `*_env_gen.go` (`codegen.Generate`) |
 | `reflectenv` | Opt-in reflection `Parse` / `ParseWithSnapshot` |
 | `examples/` | End-to-end samples (`basic`, `minimal`, `crosspkg`) |
-| `bench/` | Comparison benches vs caarlos0/env, viper, stdlib |
+| `bench/` | Comparison benches vs stdlib, caarlos0/env, cleanenv, goenv, envconfig, viper |
 
 ## Key design rules
 
@@ -72,6 +72,7 @@ func Generate(opts Options) error
 func LoadConfig() (Config, error)
 func ReloadConfig() (Config, error)
 func (c Config) Masked() Config
+func AuditConfig(snap *env.EnvSnapshot) env.AuditReport
 ```
 
 ## Request / call flow

@@ -16,7 +16,12 @@ func LoadConfig() (Config, error) {
 
 func ReloadConfig(cfg *Config) error {
 	env.Reload()
-	return loadConfig(cfg, env.Snapshot())
+	var next Config
+	if err := loadConfig(&next, env.Snapshot()); err != nil {
+		return err
+	}
+	*cfg = next
+	return nil
 }
 
 func MustReloadConfig(cfg *Config) {
@@ -45,6 +50,31 @@ func (c Config) Masked() Config {
 	out := c
 	out.DB.Password = env.SensitiveMask
 	return out
+}
+
+var configAuditSchema = []env.SchemaField{
+	{Key: "STARTED", FieldPath: "Started"},
+	{Key: "LABELS", FieldPath: "Labels"},
+	{Key: "DB_HOST", FieldPath: "DB.Host", Prefix: "DB_", Required: true},
+	{Key: "DB_PASSWORD", FieldPath: "DB.Password", Prefix: "DB_", Sensitive: true},
+	{Key: "DB_PORT", FieldPath: "DB.Port", Default: "5432", Prefix: "DB_", HasDefault: true},
+	{Key: "BASE_URL", FieldPath: "BaseURL", Default: "${NATS_URL}/api", HasDefault: true},
+	{Key: "TAGS", FieldPath: "Tags"},
+	{Key: "PORT", FieldPath: "Port", Default: "8080", HasDefault: true},
+	{Key: "TIMEOUT", FieldPath: "Timeout", Default: "10s", HasDefault: true},
+	{Key: "DEBUG", FieldPath: "Debug"},
+}
+
+func AuditConfig(snap *env.EnvSnapshot) env.AuditReport {
+	return env.Audit(snap, configAuditSchema, env.AuditOptions{})
+}
+
+func AuditConfigWithOptions(snap *env.EnvSnapshot, opts env.AuditOptions) env.AuditReport {
+	return env.Audit(snap, configAuditSchema, opts)
+}
+
+func AuditConfigFromEnviron() env.AuditReport {
+	return AuditConfig(env.Snapshot())
 }
 
 func loadConfig(cfg *Config, snap *env.EnvSnapshot) error {
@@ -115,7 +145,9 @@ func loadConfig(cfg *Config, snap *env.EnvSnapshot) error {
 		key := "BASE_URL"
 		raw, ok := snap.Lookup(key)
 		if !ok || env.IsEmpty(raw) {
-			cfg.BaseURL = env.Expand("${NATS_URL}/api", snap)
+			defaultRaw := env.Expand("${NATS_URL}/api", snap)
+			v := defaultRaw
+			cfg.BaseURL = v
 		} else {
 			raw = env.Expand(raw, snap)
 			cfg.BaseURL = raw

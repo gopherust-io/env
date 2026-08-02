@@ -16,7 +16,12 @@ func LoadConfig() (Config, error) {
 
 func ReloadConfig(cfg *Config) error {
 	env.Reload()
-	return loadConfig(cfg, env.Snapshot())
+	var next Config
+	if err := loadConfig(&next, env.Snapshot()); err != nil {
+		return err
+	}
+	*cfg = next
+	return nil
 }
 
 func MustReloadConfig(cfg *Config) {
@@ -41,13 +46,32 @@ func MustLoadConfig() Config {
 	return cfg
 }
 
+var configAuditSchema = []env.SchemaField{
+	{Key: "HOST", FieldPath: "Host", Default: "localhost", HasDefault: true},
+	{Key: "PORT", FieldPath: "Port", Default: "8080", HasDefault: true},
+	{Key: "DEBUG", FieldPath: "Debug"},
+}
+
+func AuditConfig(snap *env.EnvSnapshot) env.AuditReport {
+	return env.Audit(snap, configAuditSchema, env.AuditOptions{})
+}
+
+func AuditConfigWithOptions(snap *env.EnvSnapshot, opts env.AuditOptions) env.AuditReport {
+	return env.Audit(snap, configAuditSchema, opts)
+}
+
+func AuditConfigFromEnviron() env.AuditReport {
+	return AuditConfig(env.Snapshot())
+}
+
 func loadConfig(cfg *Config, snap *env.EnvSnapshot) error {
 	var errs []env.FieldError
 	{
 		key := "HOST"
 		raw, ok := snap.Lookup(key)
 		if !ok || env.IsEmpty(raw) {
-			cfg.Host = "localhost"
+			v := "localhost"
+			cfg.Host = v
 		} else {
 			cfg.Host = raw
 		}
