@@ -3,7 +3,7 @@ module github.com/gopherust-io/env/bench
 go 1.26.5
 
 require (
-	github.com/caarlos0/env/v11 v11.4.1
+	github.com/caarlos0/env/v11 v11.4.2
 	github.com/gopherust-io/env v0.6.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/kelseyhightower/envconfig v1.4.0
